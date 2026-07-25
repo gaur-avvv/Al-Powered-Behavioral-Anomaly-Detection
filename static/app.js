@@ -285,29 +285,27 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAlertTable();
     }
 
-    // 6. Simulator & Manual Retraining Triggers
+    // 6. Cyber Attack Simulator & Manual Retraining Triggers
     if (simForm) {
         simForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const attackType = document.getElementById('sim-attack-type').value;
             const entityId = document.getElementById('sim-entity').value;
-            const geoVel = parseFloat(document.getElementById('sim-geovel').value);
-            const logins = parseInt(document.getElementById('sim-logins').value);
-            const dev = parseFloat(document.getElementById('sim-dev').value);
-            const rate = parseFloat(document.getElementById('sim-rate').value);
+            const intensity = parseFloat(document.getElementById('sim-intensity').value || '1.5');
+            const sourceIp = document.getElementById('sim-ip').value;
+            const geoLocation = document.getElementById('sim-geo').value;
 
             const payload = {
+                attack_type: attackType,
                 entity_id: entityId,
-                features: {
-                    geo_velocity: geoVel,
-                    failed_logins: logins,
-                    new_device: dev,
-                    request_rate: rate
-                }
+                intensity: intensity,
+                source_ip: sourceIp,
+                geo_location: geoLocation
             };
 
             try {
-                const res = await fetch('/api/v1/detect', {
+                const res = await fetch('/api/v1/simulate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -315,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 handleNewAlert(data);
             } catch (err) {
-                console.error("Simulation submit failed:", err);
+                console.error("Attack simulation submit failed:", err);
             }
         });
     }

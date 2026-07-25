@@ -26,107 +26,121 @@
 
 ---
 
-## 🧪 Integration Verification Performance Matrix (24/24 Checks Passed)
+## 🧪 Integration Verification Results (24/24 Checks Passed)
 
-The system includes a comprehensive integration verification suite ([`tests/verify_all_integrated.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/tests/verify_all_integrated.py)) validating every subsystem end-to-end:
+The system includes a comprehensive integration verification suite ([`tests/verify_all_integrated.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/tests/verify_all_integrated.py)) testing every subsystem end-to-end:
 
-| Subsystem / Category | Verification Check | Execution Time | Status |
-|---|---|---|---|
-| **1. Feature Selection** | L1 (LASSO) Feature Selector | `10065.0ms` | ✅ **PASS** |
-| **1. Feature Selection** | Tree Stability Feature Selector | `513.9ms` | ✅ **PASS** |
-| **1. Feature Selection** | Neural Integrated Gradients Selector | `14043.1ms` | ✅ **PASS** |
-| **2. Dimensionality Reduction** | PCA Reducer (fit/transform/inverse) | `18.8ms` | ✅ **PASS** |
-| **2. Dimensionality Reduction** | t-SNE Manifold Reducer | `2137.5ms` | ✅ **PASS** |
-| **2. Dimensionality Reduction** | UMAP Manifold Reducer (PCA fallback) | `4.8ms` | ✅ **PASS** |
-| **3. Deep Learning Models** | PyTorch LSTM Autoencoder (Forward Pass) | `115.4ms` | ✅ **PASS** |
-| **3. Deep Learning Models** | Autoencoder Trainer (3-Epoch Training) | `120.6ms` | ✅ **PASS** |
-| **3. Deep Learning Models** | PyTorch Graph Autoencoder (GCN) | `8.0ms` | ✅ **PASS** |
-| **3. Deep Learning Models** | Graph Data Preprocessor | `2.2ms` | ✅ **PASS** |
-| **4. Time Series & CV** | Advanced Time Series Split (Expanding Window) | `10.1ms` | ✅ **PASS** |
-| **4. Time Series & CV** | Cross-Validation Manager (3-Fold) | `75.1ms` | ✅ **PASS** |
-| **5. Regularization Controls** | Regularization Manager (Ridge Alpha Search) | `310.6ms` | ✅ **PASS** |
-| **5. Regularization Controls** | Early Stopping & Model Monitor | `1.9ms` | ✅ **PASS** |
-| **6. Detection & Classification**| Entity Baseline Profiler | `1.9ms` | ✅ **PASS** |
-| **6. Detection & Classification**| Sequence Anomaly Detector | `2.1ms` | ✅ **PASS** |
-| **6. Detection & Classification**| Multi-Class Attack Classifier | `1.6ms` | ✅ **PASS** |
-| **7. Explainability Layer** | SHAP Feature Attributions Engine | `4.2ms` | ✅ **PASS** |
-| **7. Explainability Layer** | LIME Local Approximations Engine | `0.0ms` | ✅ **PASS** |
-| **8. Services & API** | Dashboard WebSocket Service | `2.9ms` | ✅ **PASS** |
-| **8. Services & API** | Monitoring Health Service | `3.6ms` | ✅ **PASS** |
-| **8. Services & API** | Performance Report Generator | `2.5ms` | ✅ **PASS** |
-| **8. Services & API** | FastAPI Application Import | `678.0ms` | ✅ **PASS** |
-| **BONUS Assets** | All 6 Visualization Matrix Artifact PNGs | `0.7ms` | ✅ **PASS** |
-| **TOTAL** | **24 Comprehensive System Checks** | **ALL PASSED** | 🎉 **100% OPERATIONAL** |
+```
+======================================================================
+  AEGIS.AI - Comprehensive Module Integration Verification Results
+======================================================================
+
+[1/8] Feature Selection Modules:
+  [PASS] L1 (LASSO) Feature Selector (10065.0ms)
+  [PASS] Tree Stability Feature Selector (513.9ms)
+  [PASS] Neural Integrated Gradients Selector (14043.1ms)
+
+[2/8] Dimensionality Reduction Modules:
+  [PASS] PCA Reducer (fit/transform/inverse) (18.8ms)
+  [PASS] t-SNE Manifold Reducer (2137.5ms)
+  [PASS] UMAP Manifold Reducer (PCA fallback) (4.8ms)
+
+[3/8] Deep Learning Models:
+  [PASS] PyTorch LSTM Autoencoder (forward pass) (115.4ms)
+  [PASS] Autoencoder Trainer (3-epoch training) (120.6ms)
+  [PASS] PyTorch Graph Autoencoder (GCN) (8.0ms)
+  [PASS] Graph Data Preprocessor (2.2ms)
+
+[4/8] Time Series Splitting & Cross-Validation:
+  [PASS] Advanced Time Series Split (expanding) (10.1ms)
+  [PASS] Cross-Validation Manager (3-fold) (75.1ms)
+
+[5/8] Regularization & Overfitting Controls:
+  [PASS] Regularization Manager (Ridge alpha) (310.6ms)
+  [PASS] Early Stopping & Model Monitor (1.9ms)
+
+[6/8] Detection & Classification:
+  [PASS] Entity Baseline Profiler (1.9ms)
+  [PASS] Sequence Anomaly Detector (2.1ms)
+  [PASS] Multi-Class Attack Classifier (1.6ms)
+
+[7/8] Explainability:
+  [PASS] SHAP Feature Attributions (4.2ms)
+  [PASS] LIME Local Approximations (0.0ms)
+
+[8/8] Services & API:
+  [PASS] Dashboard WebSocket Service (2.9ms)
+  [PASS] Monitoring Health Service (3.6ms)
+  [PASS] Performance Report Generator (2.5ms)
+  [PASS] FastAPI Application Import (678.0ms)
+
+[BONUS] Visualization Matrix Artifacts:
+  [PASS] All 6 PNG Assets Exist & Valid (0.7ms)
+
+======================================================================
+  TOTAL: 24 checks | PASSED: 24 | FAILED: 0
+  ALL MODULES VERIFIED - FULLY INTEGRATED & OPERATIONAL
+======================================================================
+```
 
 ---
 
 ## 📐 Advanced 6-Tier System Architecture
 
-```mermaid
-graph TB
-    %% Class Definitions for Styling
-    classDef client fill:#1e1e38,stroke:#6366f1,stroke-width:2px,color:#ffffff
-    classDef api fill:#0f2b46,stroke:#0ea5e9,stroke-width:2px,color:#ffffff
-    classDef feature fill:#2e1065,stroke:#a855f7,stroke-width:2px,color:#ffffff
-    classDef model fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff
-    classDef explain fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#ffffff
-    classDef store fill:#3f0f1d,stroke:#ec4899,stroke-width:2px,color:#ffffff
-
-    subgraph Tier1["1. CLIENT & PRESENTATION TIER"]
-        UI["Security Analyst Dashboard<br/><i>(Glassmorphism Web UI)</i>"] :::client
-        Sim["Event Simulator & Telemetry"] :::client
-        MetricsUI["Prometheus Metrics & Dashboard"] :::client
-    end
-
-    subgraph Tier2["2. API GATEWAY & ROUTING TIER"]
-        FastAPI["FastAPI High-Throughput Server"] :::api
-        REST["REST Endpoints<br/><code>/detect, /metrics, /retrain</code>"] :::api
-        WS["WebSocket Stream Engine<br/><code>/ws/dashboard/{id}</code>"] :::api
-    end
-
-    subgraph Tier3["3. FEATURE SELECTION & REDUCTION TIER"]
-        L1["L1 LASSO Feature Selector"] :::feature
-        TreeSel["Tree Stability Selection"] :::feature
-        IG["Neural Integrated Gradients"] :::feature
-        DimRed["PCA / t-SNE / UMAP Reducers"] :::feature
-    end
-
-    subgraph Tier4["4. DEEP LEARNING MODEL INFERENCE TIER"]
-        LSTM["PyTorch LSTM Autoencoder<br/><i>(Sequence Bottleneck & Attention)</i>"] :::model
-        GNN["PyTorch Graph Neural Network<br/><i>(GCN / GAT / SAGE Convolutions)</i>"] :::model
-        Classifier["Multi-Class Attack Taxonomy Classifier"] :::model
-    end
-
-    subgraph Tier5["5. EXPLAINABILITY & DRIFT MONITORING TIER"]
-        SHAP["SHAP Feature Attributions"] :::explain
-        LIME["LIME Local Approximations"] :::explain
-        Retrainer["Automatic Model Retrainer<br/><i>(Async Background Drift Loop)</i>"] :::explain
-    end
-
-    subgraph Tier6["6. PERSISTENCE & FEATURE STORE TIER"]
-        Redis["In-Memory Feature & Alert Store<br/><i>(Entity Profiles, Risk Queue, Baseline)</i>"] :::store
-    end
-
-    %% Routing Flow
-    UI <--> REST
-    UI <--> WS
-    Sim --> REST
-    MetricsUI <--> REST
-
-    FastAPI --> REST
-    FastAPI --> WS
-
-    REST --> L1 & TreeSel & IG
-    L1 & TreeSel & IG --> DimRed
-
-    DimRed --> LSTM & GNN & Classifier
-
-    LSTM & GNN & Classifier --> SHAP & LIME
-    LSTM --> Retrainer
-
-    SHAP & LIME --> Redis
-    Retrainer --> Redis
-    Redis --> WS
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                1. CLIENT & PRESENTATION TIER                            │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ Security Analyst Dashboard│    │  Interactive Event        │   │ Prometheus       │  │
+│  │ (Glassmorphism Web UI)    │    │  Behavior Simulator       │   │ Metric Collectors│  │
+│  └─────────────┬─────────────┘    └─────────────┬─────────────┘   └────────┬─────────┘  │
+└────────────────┼────────────────────────────────┼──────────────────────────┼────────────┘
+                 │                                │                          │
+┌────────────────▼────────────────────────────────▼──────────────────────────▼────────────┐
+│                             2. API GATEWAY & ROUTING TIER                               │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          FastAPI High-Throughput Server                           │  │
+│  │  REST Gateway (/api/v1/detect, /metrics, /retrain) │ WebSocket Stream Engine      │  │
+│  └────────────────────────────────────────┬──────────────────────────────────────────┘  │
+└───────────────────────────────────────────┼─────────────────────────────────────────────┘
+                                            │
+┌───────────────────────────────────────────▼─────────────────────────────────────────────┐
+│                       3. FEATURE SELECTION & REDUCTION TIER                             │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ L1 Regularization (LASSO) │    │ Tree Stability Selection  │   │ Integrated       │  │
+│  │ Feature Selector          │    │ (Bootstrap Resampling)    │   │ Gradients        │  │
+│  └─────────────┬─────────────┘    └─────────────┬─────────────┘   └────────┬─────────┘  │
+│                └────────────────────────┬───────┴──────────────────────────┘            │
+│                                ┌────────▼────────┐                                      │
+│                                │ PCA / t-SNE /   │                                      │
+│                                │ UMAP Reducers   │                                      │
+│                                └────────┬────────┘                                      │
+└─────────────────────────────────────────┼───────────────────────────────────────────────┘
+                                          │
+┌─────────────────────────────────────────▼───────────────────────────────────────────────┐
+│                          4. DEEP LEARNING MODEL INFERENCE TIER                          │
+│  ┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────┐ │
+│  │ PyTorch LSTM Autoencoder     │ │ PyTorch Graph Neural Network │ │ Multi-Class      │ │
+│  │ (Sequence Bottleneck &       │ │ (GCN / GAT / SAGE Graph      │ │ Attack Taxonomy  │ │
+│  │  Multi-Head Attention)       │ │  Convolutions)               │ │ Classifier       │ │
+│  └──────────────┬───────────────┘ └──────────────┬───────────────┘ └────────┬─────────┘ │
+└─────────────────┼────────────────────────────────┼─────────────────────────┼────────────┘
+                  │                                │                         │
+┌─────────────────▼────────────────────────────────▼─────────────────────────▼────────────┐
+│                        5. EXPLAINABILITY & DRIFT MONITORING TIER                        │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ SHAP Feature Attributions │    │ LIME Local Approximations │   │ Automatic Model  │  │
+│  │ Engine                    │    │ Engine                    │   │ Retrainer        │  │
+│  └───────────────────────────┘    └───────────────────────────┘   └────────┬─────────┘  │
+└────────────────────────────────────────────────────────────────────────────┼────────────┘
+                                                                             │
+┌────────────────────────────────────────────────────────────────────────────▼────────────┐
+│                             6. PERSISTENCE & FEATURE STORE TIER                         │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                       Redis / High-Performance In-Memory Store                    │  │
+│  │   Entity Profiles │ Baseline Metrics │ Priority Risk Alert Queue │ Retrain State  │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---

@@ -225,42 +225,53 @@
                     </div>
                 </div>
 
-                <!-- Interactive Event Simulation Form -->
+                <!-- Interactive Cyber Attack Simulator Form -->
                 <div class="glass-panel simulator-panel">
                     <div class="panel-header">
-                        <h3>Behavioral Event Simulator</h3>
-                        <span class="panel-subtitle">Inject synthetic entity observations</span>
+                        <h3>⚡ Real-Time Cyber Attack Simulator</h3>
+                        <span class="panel-subtitle">Inject synthetic attack vectors &amp; test detection engine</span>
                     </div>
                     <form id="sim-form" class="sim-form">
                         <div class="form-group">
-                            <label for="sim-entity">Entity ID</label>
-                            <input type="text" id="sim-entity" value="entity_analyst_demo" required>
+                            <label for="sim-attack-type">Select Cyber Attack Vector</label>
+                            <select id="sim-attack-type" class="select-input">
+                                <option value="brute_force">🔴 Brute Force Attack (Rapid Failed Auths)</option>
+                                <option value="impossible_travel">🌐 Impossible Travel (High Geo Velocity)</option>
+                                <option value="credential_stuffing">💥 Credential Stuffing (High Vol &amp; Fails)</option>
+                                <option value="lateral_movement">🔀 Lateral Movement (Unusual Scope/SSH)</option>
+                                <option value="device_spoofing">📱 Device Spoofing (Fingerprint Mismatch)</option>
+                                <option value="low_and_slow_exfiltration">🕵️ Low &amp; Slow Exfiltration (Off-hours Small Downloads)</option>
+                                <option value="insider_drift">👤 Insider Privilege Drift (Expanding Admin Scope)</option>
+                                <option value="credential_misuse">🔑 Credential Misuse (Suspicious Context Logins)</option>
+                            </select>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="sim-geovel">Geo Velocity (km/h)</label>
-                                <input type="number" id="sim-geovel" value="180" step="10">
+                                <label for="sim-entity">Target Entity ID</label>
+                                <input type="text" id="sim-entity" value="USR-SIM-8082" required>
                             </div>
                             <div class="form-group">
-                                <label for="sim-logins">Failed Logins</label>
-                                <input type="number" id="sim-logins" value="6" step="1">
+                                <label for="sim-intensity">Attack Signal Intensity</label>
+                                <input type="number" id="sim-intensity" value="1.5" min="0.5" max="5.0" step="0.5">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="sim-dev">New Device Flag</label>
-                                <select id="sim-dev">
-                                    <option value="1">1 (Yes)</option>
-                                    <option value="0">0 (No)</option>
+                                <label for="sim-ip">Simulated Source IP</label>
+                                <input type="text" id="sim-ip" value="198.51.100.45">
+                            </div>
+                            <div class="form-group">
+                                <label for="sim-geo">Origin Geo Location</label>
+                                <select id="sim-geo">
+                                    <option value="EU-West">EU-West (Frankfurt)</option>
+                                    <option value="AP-South">AP-South (Mumbai)</option>
+                                    <option value="US-East">US-East (N. Virginia)</option>
+                                    <option value="SA-East">SA-East (São Paulo)</option>
                                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="sim-rate">Request Rate (req/s)</label>
-                                <input type="number" id="sim-rate" value="125" step="5">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-accent btn-full">
-                            <span>Execute Detection &amp; Broadcast Alert</span>
+                            <span>🚀 Launch Attack Simulation &amp; Real-Time Detection</span>
                         </button>
                     </form>
                 </div>

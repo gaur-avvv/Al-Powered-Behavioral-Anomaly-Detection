@@ -112,6 +112,20 @@ class ProfileRequest(BaseModel):
     historical_data: List[float] = Field(...)
 
 
+class SimulationRequest(BaseModel):
+    """Pydantic model for real-time attack pattern simulation."""
+
+    attack_type: str = Field(
+        default="brute_force",
+        description="brute_force | impossible_travel | credential_stuffing | lateral_movement | device_spoofing | low_and_slow_exfiltration | insider_drift | credential_misuse"
+    )
+    entity_id: Optional[str] = Field(default="USR-SIM-001")
+    entity_type: Optional[str] = Field(default="user")
+    intensity: Optional[float] = Field(default=1.0)
+    source_ip: Optional[str] = Field(default=None)
+    geo_location: Optional[str] = Field(default=None)
+
+
 def verify_authorization(authorization: Optional[str] = Header(None)) -> Optional[str]:
     """Dependency helper verifying API authentication headers."""
     if authorization and authorization.startswith("Bearer invalid"):
@@ -270,6 +284,151 @@ async def trigger_model_retraining() -> Dict[str, Any]:
     return {
         "status": "retraining_initiated",
         "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@app.post("/api/v1/simulate", response_model=Dict[str, Any])
+async def simulate_attack_event(
+    payload: SimulationRequest,
+    auth: Optional[str] = Depends(verify_authorization)
+) -> Dict[str, Any]:
+    """
+    Real-time attack simulation endpoint.
+    Simulates customizable cyber attack patterns (brute force, impossible travel, lateral movement, etc.),
+    executes sequence anomaly detection, attack taxonomy classification, and SHAP attributions,
+    and streams real-time alerts over WebSockets to the Security Analyst Dashboard.
+    """
+    start_time = datetime.now(timezone.utc)
+    entity_id = payload.entity_id or "USR-SIM-001"
+    attack = payload.attack_type.lower()
+    intensity = max(0.1, min(5.0, payload.intensity or 1.0))
+
+    # Parameter profiles for simulated attack signals
+    features: Dict[str, float] = {}
+
+    if attack == "brute_force":
+        features = {
+            "geo_velocity": 15.0 * intensity,
+            "failed_logins": float(25 * intensity),
+            "new_device": 1.0,
+            "request_rate": 180.0 * intensity,
+            "session_duration": 0.2
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (3.5 * intensity)
+    elif attack == "impossible_travel":
+        features = {
+            "geo_velocity": 4500.0 * intensity,
+            "failed_logins": 1.0,
+            "new_device": 1.0,
+            "request_rate": 45.0 * intensity,
+            "session_duration": 5.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (5.0 * intensity)
+    elif attack == "credential_stuffing":
+        features = {
+            "geo_velocity": 120.0 * intensity,
+            "failed_logins": float(50 * intensity),
+            "new_device": 1.0,
+            "request_rate": 350.0 * intensity,
+            "session_duration": 0.1
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (4.2 * intensity)
+    elif attack == "lateral_movement":
+        features = {
+            "geo_velocity": 85.0 * intensity,
+            "failed_logins": 3.0,
+            "new_device": 0.0,
+            "request_rate": 220.0 * intensity,
+            "session_duration": 120.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (3.8 * intensity)
+    elif attack == "device_spoofing":
+        features = {
+            "geo_velocity": 30.0 * intensity,
+            "failed_logins": 2.0,
+            "new_device": 1.0,
+            "request_rate": 60.0 * intensity,
+            "session_duration": 15.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (2.9 * intensity)
+    elif attack == "low_and_slow_exfiltration":
+        features = {
+            "geo_velocity": 20.0 * intensity,
+            "failed_logins": 0.0,
+            "new_device": 0.0,
+            "request_rate": 15.0 * intensity,
+            "session_duration": 8.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (2.2 * intensity)
+    elif attack == "insider_drift":
+        features = {
+            "geo_velocity": 10.0 * intensity,
+            "failed_logins": 1.0,
+            "new_device": 0.0,
+            "request_rate": 95.0 * intensity,
+            "session_duration": 45.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (2.5 * intensity)
+    else:  # credential_misuse or default
+        features = {
+            "geo_velocity": 350.0 * intensity,
+            "failed_logins": 4.0,
+            "new_device": 1.0,
+            "request_rate": 110.0 * intensity,
+            "session_duration": 12.0
+        }
+        seq = np.ones((1, 10, 3), dtype=np.float32) * (3.1 * intensity)
+
+    # Detect anomaly & classify taxonomy
+    det_res = detector.detect_sequence_anomaly(entity_id, seq)
+    anomaly_score = float(det_res.get("combined_score", 0.85))
+    class_res = classifier.classify_anomaly(features)
+    explanation = explainer.explain_anomaly(features, method="shap")
+
+    latency_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000.0
+    monitoring.record_detection_latency(latency_ms)
+
+    alert_id = f"sim_alert_{int(datetime.now(timezone.utc).timestamp() * 1000)}"
+    alert_payload = {
+        "id": alert_id,
+        "entity_id": entity_id,
+        "score": anomaly_score,
+        "category": class_res["primary_category"],
+        "confidence": class_res["confidence"],
+        "explanation": explanation,
+        "top_categories": class_res["top_categories"],
+        "latency_ms": latency_ms,
+        "attack_type": attack,
+        "source_ip": payload.source_ip or "192.168.1.100",
+        "geo_location": payload.geo_location or "US-East",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+    monitoring.record_alert(alert_payload)
+
+    dashboard.redis_client.hset(f"alert:{alert_id}", mapping={
+        "id": alert_id,
+        "entity_id": entity_id,
+        "score": str(anomaly_score),
+        "category": class_res["primary_category"],
+        "confidence": str(class_res["confidence"])
+    })
+    dashboard.redis_client.zadd("recent_alerts", {alert_id: anomaly_score})
+
+    # Broadcast to connected dashboard WebSocket clients
+    await dashboard.broadcast_alert(alert_payload)
+
+    return {
+        "simulation_status": "SUCCESS",
+        "alert_id": alert_id,
+        "entity_id": entity_id,
+        "simulated_attack": attack,
+        "score": anomaly_score,
+        "category": class_res["primary_category"],
+        "confidence": class_res["confidence"],
+        "explanation": explanation,
+        "latency_ms": latency_ms,
+        "timestamp": alert_payload["timestamp"]
     }
 
 

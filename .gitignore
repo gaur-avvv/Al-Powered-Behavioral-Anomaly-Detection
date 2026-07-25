@@ -23,5 +23,9 @@ htmlcov/
 *.swo
 .DS_Store
 
+# Environment & Secrets
+.env
+.env.local
+
 # Antigravity IDE internal files
 .system_generated/
