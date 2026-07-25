@@ -83,16 +83,9 @@ The system includes a comprehensive integration verification suite ([`tests/veri
 ## 📐 Advanced 6-Tier System Architecture
 
 ```mermaid
-flowchart TB
-    classDef client fill:#1e1e38,stroke:#6366f1,stroke-width:2px,color:#ffffff;
-    classDef api fill:#0f2b46,stroke:#0ea5e9,stroke-width:2px,color:#ffffff;
-    classDef feature fill:#2e1065,stroke:#a855f7,stroke-width:2px,color:#ffffff;
-    classDef model fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff;
-    classDef explain fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
-    classDef store fill:#3f0f1d,stroke:#ec4899,stroke-width:2px,color:#ffffff;
-
+graph TD
     subgraph Tier1["1. CLIENT & PRESENTATION TIER"]
-        UI["Security Analyst Dashboard (Glassmorphism UI)"]
+        UI["Security Analyst Dashboard (Glassmorphism Web UI)"]
         Sim["Real-Time Cyber Attack Simulator"]
         MetricsUI["Prometheus Metrics Collector"]
     end
@@ -126,32 +119,94 @@ flowchart TB
         Redis["Redis In-Memory Feature & Alert Store"]
     end
 
-    UI <--> REST
-    UI <--> WS
+    UI --> REST
+    UI --> WS
     Sim --> REST
-    MetricsUI <--> REST
+    MetricsUI --> REST
 
     FastAPI --> REST
     FastAPI --> WS
 
-    REST --> L1 & TreeSel & IG
-    L1 & TreeSel & IG --> DimRed
+    REST --> L1
+    REST --> TreeSel
+    REST --> IG
 
-    DimRed --> LSTM & GNN & Classifier
+    L1 --> DimRed
+    TreeSel --> DimRed
+    IG --> DimRed
 
-    LSTM & GNN & Classifier --> SHAP & LIME
+    DimRed --> LSTM
+    DimRed --> GNN
+    DimRed --> Classifier
+
+    LSTM --> SHAP
+    LSTM --> LIME
+    GNN --> SHAP
+    Classifier --> SHAP
     LSTM --> Retrainer
 
-    SHAP & LIME --> Redis
+    SHAP --> Redis
+    LIME --> Redis
     Retrainer --> Redis
     Redis --> WS
+```
 
-    class UI,Sim,MetricsUI client;
-    class FastAPI,REST,WS api;
-    class L1,TreeSel,IG,DimRed feature;
-    class LSTM,GNN,Classifier model;
-    class SHAP,LIME,Retrainer explain;
-    class Redis store;
+### System Architecture Flowchart Diagram (High-Contrast Reference)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                1. CLIENT & PRESENTATION TIER                            │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ Security Analyst Dashboard│    │  Real-Time Cyber Attack   │   │ Prometheus       │  │
+│  │ (Glassmorphism Web UI)    │    │  Simulator                │   │ Metric Collectors│  │
+│  └─────────────┬─────────────┘    └─────────────┬─────────────┘   └────────┬─────────┘  │
+└────────────────┼────────────────────────────────┼──────────────────────────┼────────────┘
+                 │                                │                          │
+┌────────────────▼────────────────────────────────▼──────────────────────────▼────────────┐
+│                             2. API GATEWAY & ROUTING TIER                               │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          FastAPI High-Throughput Server                           │  │
+│  │  REST Gateway (/api/v1/detect, /simulate, /metrics) │ WebSocket Stream Engine     │  │
+│  └────────────────────────────────────────┬──────────────────────────────────────────┘  │
+└───────────────────────────────────────────┼─────────────────────────────────────────────┘
+                                            │
+┌───────────────────────────────────────────▼─────────────────────────────────────────────┐
+│                       3. FEATURE SELECTION & REDUCTION TIER                             │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ L1 Regularization (LASSO) │    │ Tree Stability Selection  │   │ Integrated       │  │
+│  │ Feature Selector          │    │ (Bootstrap Resampling)    │   │ Gradients        │  │
+│  └─────────────┬─────────────┘    └─────────────┬─────────────┘   └────────┬─────────┘  │
+│                └────────────────────────┬───────┴──────────────────────────┘            │
+│                                ┌────────▼────────┐                                      │
+│                                │ PCA / t-SNE /   │                                      │
+│                                │ UMAP Reducers   │                                      │
+│                                └────────┬────────┘                                      │
+└─────────────────────────────────────────┼───────────────────────────────────────────────┘
+                                          │
+┌─────────────────────────────────────────▼───────────────────────────────────────────────┐
+│                          4. DEEP LEARNING MODEL INFERENCE TIER                          │
+│  ┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────┐ │
+│  │ PyTorch LSTM Autoencoder     │ │ PyTorch Graph Neural Network │ │ Multi-Class      │ │
+│  │ (Sequence Bottleneck &       │ │ (GCN / GAT / SAGE Graph      │ │ Attack Taxonomy  │ │
+│  │  Multi-Head Attention)       │ │  Convolutions)               │ │ Classifier       │ │
+│  └──────────────┬───────────────┘ └──────────────┬───────────────┘ └────────┬─────────┘ │
+└─────────────────┼────────────────────────────────┼─────────────────────────┼────────────┘
+                  │                                │                         │
+┌─────────────────▼────────────────────────────────▼─────────────────────────▼────────────┐
+│                        5. EXPLAINABILITY & DRIFT MONITORING TIER                        │
+│  ┌───────────────────────────┐    ┌───────────────────────────┐   ┌──────────────────┐  │
+│  │ SHAP Feature Attributions │    │ LIME Local Approximations │   │ Automatic Model  │  │
+│  │ Engine                    │    │ Engine                    │   │ Retrainer        │  │
+│  └───────────────────────────┘    └───────────────────────────┘   └────────┬─────────┘  │
+└────────────────────────────────────────────────────────────────────────────┼────────────┘
+                                                                             │
+┌────────────────────────────────────────────────────────────────────────────▼────────────┐
+│                             6. PERSISTENCE & FEATURE STORE TIER                         │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                       Redis / High-Performance In-Memory Store                    │  │
+│  │   Entity Profiles │ Baseline Metrics │ Priority Risk Alert Queue │ Retrain State  │  │
+│  └───────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
