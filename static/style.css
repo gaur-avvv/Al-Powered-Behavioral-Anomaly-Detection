@@ -522,6 +522,78 @@ canvas {
     transition: width 0.5s ease;
 }
 
+/* Alert Table Row Hover & Modal Overlay */
+.alert-table tbody tr {
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.alert-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.12) !important;
+    transform: translateX(4px);
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(6, 9, 19, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 650px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
+    padding: 1.75rem;
+    border-radius: var(--radius-lg);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-card);
+}
+
+.modal-header h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.75rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: var(--danger);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 /* Priority Alert Table */
 .table-responsive {
     overflow-x: auto;

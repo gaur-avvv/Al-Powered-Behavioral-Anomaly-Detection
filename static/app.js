@@ -1,6 +1,7 @@
 /**
- * Analyst Operations Dashboard Frontend Controller
- * Real-time WebSockets, Live Performance Matrices & Automated Retraining Triggers.
+ * AEGIS.AI — Analyst Operations Dashboard Frontend Controller
+ * Real-time WebSockets, Live Telemetry Stream, Alert Deduplication,
+ * Interactive Diagnostic Drawer, and Model Performance Matrix.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,17 +10,48 @@ document.addEventListener('DOMContentLoaded', () => {
         anomalyHistory: [0.12, 0.15, 0.18, 0.14, 0.22, 0.19, 0.25, 0.31, 0.28, 0.87],
         labels: ['10m', '9m', '8m', '7m', '6m', '5m', '4m', '3m', '2m', 'now'],
         alerts: [
-            { id: 'alert_101', entity_id: 'entity_001', score: 0.87, category: 'credential_stuffing', confidence: 0.94, timestamp: new Date().toLocaleTimeString() },
-            { id: 'alert_102', entity_id: 'entity_042', score: 0.72, category: 'privilege_escalation', confidence: 0.88, timestamp: new Date().toLocaleTimeString() },
-            { id: 'alert_103', entity_id: 'entity_088', score: 0.65, category: 'ddos_flooding', confidence: 0.85, timestamp: new Date().toLocaleTimeString() }
+            {
+                id: 'alert_101',
+                entity_id: 'USR-SIM-1014',
+                score: 0.87,
+                category: 'credential_stuffing',
+                confidence: 0.94,
+                timestamp: new Date().toLocaleTimeString(),
+                routing_path: 'Bi-LSTM+GNN-Full-Inference',
+                is_cold_start: false
+            },
+            {
+                id: 'alert_102',
+                entity_id: 'SVC-CRIT-4102',
+                score: 0.72,
+                category: 'privilege_escalation',
+                confidence: 0.88,
+                timestamp: new Date().toLocaleTimeString(),
+                routing_path: 'Level-2-Peer-Group-Baseline',
+                is_cold_start: true
+            },
+            {
+                id: 'alert_103',
+                entity_id: 'DEV-GATEWAY-9912',
+                score: 0.65,
+                category: 'ddos_flooding',
+                confidence: 0.85,
+                timestamp: new Date().toLocaleTimeString(),
+                routing_path: 'Bi-LSTM+GNN-Full-Inference',
+                is_cold_start: false
+            }
         ],
+        seenAlertIds: new Set(['alert_101', 'alert_102', 'alert_103']),
         shap: [
             { feature: 'geo_velocity', contribution: 0.45 },
             { feature: 'new_device', contribution: 0.32 },
             { feature: 'failed_logins', contribution: 0.28 },
             { feature: 'request_rate', contribution: 0.12 }
         ],
-        wsConnected: false
+        wsConnected: false,
+        processedEventsCount: 14920,
+        activeEntitiesCount: 200,
+        currentQueueDepth: 0
     };
 
     // DOM Elements
@@ -31,6 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const triggerRetrainBtn = document.getElementById('btn-trigger-retrain');
     const wsStatusDot = document.getElementById('ws-status-dot');
     const wsStatusText = document.getElementById('ws-status-text');
+    const modal = document.getElementById('alert-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalBody = document.getElementById('modal-body-content');
 
     // 1. Draw Anomaly Score History Canvas Chart
     function drawChart() {
@@ -129,12 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Render Alert Feed Table
+    // 3. Render Alert Feed Table & Setup Inspection Modals
     function renderAlertTable() {
         if (!alertTableBody) return;
         alertTableBody.innerHTML = '';
 
-        state.alerts.forEach(alert => {
+        state.alerts.forEach((alert, index) => {
             const tr = document.createElement('tr');
             const scoreColor = alert.score > 0.7 ? 'text-red' : 'text-blue';
 
@@ -146,8 +181,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${(alert.confidence * 100).toFixed(0)}%</td>
                 <td style="color: #64748b; font-size: 0.75rem;">${alert.timestamp}</td>
             `;
+
+            tr.addEventListener('click', () => openAlertInspectionModal(alert));
             alertTableBody.appendChild(tr);
         });
+
+        const badge = document.getElementById('alert-count-badge');
+        if (badge) badge.innerText = `${state.alerts.length} Active`;
+    }
+
+    // Modal Inspection Drawer
+    function openAlertInspectionModal(alert) {
+        if (!modal || !modalBody) return;
+
+        modalBody.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6); padding: 0.75rem 1rem; border-radius: 8px;">
+                    <div>
+                        <span style="color: #94a3b8; font-size: 0.8rem;">ENTITY IDENTIFIER</span>
+                        <h4 style="color: #38bdf8; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace;">${alert.entity_id}</h4>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="color: #94a3b8; font-size: 0.8rem;">ANOMALY RISK SCORE</span>
+                        <h4 style="color: ${alert.score > 0.7 ? '#f43f5e' : '#38bdf8'}; font-size: 1.2rem;">${(alert.score * 100).toFixed(1)}% (${alert.score.toFixed(2)})</h4>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: rgba(15, 23, 42, 0.4); padding: 0.75rem; border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.75rem;">CLASSIFICATION TAXONOMY</span>
+                        <p style="color: #c084fc; font-weight: 700; margin-top: 2px;">${alert.category}</p>
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.4); padding: 0.75rem; border-radius: 8px;">
+                        <span style="color: #64748b; font-size: 0.75rem;">COLD-START STATUS</span>
+                        <p style="color: ${alert.is_cold_start ? '#fb923c' : '#34d399'}; font-weight: 700; margin-top: 2px;">${alert.is_cold_start ? '❄️ Cold-Start Peer Baseline' : '🔥 Mature Timeline (Bi-LSTM)'}</p>
+                    </div>
+                </div>
+
+                <div style="background: rgba(15, 23, 42, 0.4); padding: 0.75rem; border-radius: 8px;">
+                    <span style="color: #64748b; font-size: 0.75rem;">SYSTEM ROUTING PATH</span>
+                    <p style="color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; margin-top: 2px;">${alert.routing_path || 'Bi-LSTM+GNN-Full-Inference'}</p>
+                </div>
+
+                <div>
+                    <span style="color: #94a3b8; font-size: 0.8rem; font-weight: 600;">PRIMARY FEATURE ATTRIBUTIONS (SHAP)</span>
+                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                        ${state.shap.map(s => `
+                            <div style="display: flex; justify-content: space-between; font-size: 0.82rem; background: rgba(30, 41, 59, 0.5); padding: 0.4rem 0.75rem; border-radius: 6px;">
+                                <span style="color: #e2e8f0;">${s.feature}</span>
+                                <span style="color: #38bdf8; font-weight: 700;">+${s.contribution.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    }
+
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+    }
+    if (modal) {
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
     }
 
     // 4. Fetch & Update Model Performance Matrix
@@ -238,9 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Deduplicated New Alert Handler
     function handleNewAlert(alert) {
         if (!alert) return;
 
+        // Model retrain events
         if (alert.category && alert.category.includes('retrain')) {
             const badge = document.getElementById('retrain-status-badge');
             if (badge) {
@@ -254,18 +352,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!alert.score) return;
+        const alertId = alert.id || alert.alert_id || `alert_${Date.now()}`;
+        if (state.seenAlertIds.has(alertId)) {
+            return; // DEDUPLICATION PREVENTS DUPLICATE ALERTS
+        }
+        state.seenAlertIds.add(alertId);
+
+        const score = alert.score !== undefined ? alert.score : 0.85;
 
         state.anomalyHistory.shift();
-        state.anomalyHistory.push(alert.score);
+        state.anomalyHistory.push(score);
+
+        const entityId = alert.entity_id || 'USR-SIM-DEMO';
+        const category = alert.category || alert.simulated_attack || 'anomaly';
+        const confidence = alert.confidence || 0.95;
 
         state.alerts.unshift({
-            id: alert.id || `alert_${Date.now()}`,
-            entity_id: alert.entity_id || 'entity_demo',
-            score: alert.score,
-            category: alert.category || 'anomaly',
-            confidence: alert.confidence || 0.9,
-            timestamp: new Date().toLocaleTimeString()
+            id: alertId,
+            entity_id: entityId,
+            score: score,
+            category: category,
+            confidence: confidence,
+            timestamp: new Date().toLocaleTimeString(),
+            routing_path: alert.routing_path || 'Bi-LSTM+GNN-Full-Inference',
+            is_cold_start: alert.is_cold_start || false
         });
 
         if (state.alerts.length > 8) state.alerts.pop();
@@ -273,9 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (alert.explanation && alert.explanation.shap_values) {
             state.shap = alert.explanation.shap_values.slice(0, 4);
         }
-
-        const valRisk = document.getElementById('val-risk');
-        if (valRisk) valRisk.innerText = alert.score.toFixed(2);
 
         const valLatency = document.getElementById('val-latency');
         if (valLatency && alert.latency_ms) valLatency.innerText = `${alert.latency_ms.toFixed(1)} ms`;
@@ -285,20 +392,41 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAlertTable();
     }
 
+    // Auto-Generate Entity ID per Attack Vector
+    function generateEntityForAttack(attackType) {
+        const randNum = Math.floor(1000 + Math.random() * 9000);
+        if (attackType === 'low_and_slow_exfiltration' || attackType === 'insider_drift') {
+            return `SVC-EXFIL-${randNum}`;
+        }
+        if (attackType === 'device_spoofing') {
+            return `DEV-GATEWAY-${randNum}`;
+        }
+        if (attackType === 'lateral_movement') {
+            return `HOST-NODE-${randNum}`;
+        }
+        return `USR-SIM-${randNum}`;
+    }
+
     // 6. Cyber Attack Simulator & Manual Retraining Triggers
     if (simForm) {
         simForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const attackType = document.getElementById('sim-attack-type').value;
-            const entityId = document.getElementById('sim-entity').value;
+            let entityIdInput = document.getElementById('sim-entity').value.trim();
+
+            if (!entityIdInput) {
+                entityIdInput = generateEntityForAttack(attackType);
+                document.getElementById('sim-entity').value = entityIdInput;
+            }
+
             const intensity = parseFloat(document.getElementById('sim-intensity').value || '1.5');
             const sourceIp = document.getElementById('sim-ip').value;
             const geoLocation = document.getElementById('sim-geo').value;
 
             const payload = {
                 attack_type: attackType,
-                entity_id: entityId,
+                entity_id: entityIdInput,
                 intensity: intensity,
                 source_ip: sourceIp,
                 geo_location: geoLocation
@@ -312,10 +440,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const data = await res.json();
                 handleNewAlert(data);
+
+                // Auto-generate fresh entity ID for next run
+                document.getElementById('sim-entity').value = generateEntityForAttack(attackType);
             } catch (err) {
                 console.error("Attack simulation submit failed:", err);
             }
         });
+
+        // Generate initial entity ID on change
+        document.getElementById('sim-attack-type').addEventListener('change', (e) => {
+            document.getElementById('sim-entity').value = generateEntityForAttack(e.target.value);
+        });
+        document.getElementById('sim-entity').value = generateEntityForAttack('brute_force');
     }
 
     if (triggerRetrainBtn) {
@@ -330,12 +467,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 7. Live Real-Time Background Telemetry Ticker
+    function initRealTimeTelemetryStream() {
+        setInterval(async () => {
+            state.processedEventsCount += Math.floor(Math.random() * 8 + 3);
+            const eventsElem = document.getElementById('ticker-events-count');
+            if (eventsElem) eventsElem.innerText = state.processedEventsCount.toLocaleString();
+
+            const queueElem = document.getElementById('ticker-queue-depth');
+            if (queueElem) queueElem.innerText = state.currentQueueDepth;
+
+            // Periodically ping telemetry route to maintain background log ingestion
+            try {
+                const mockEnt = `USR-LIVE-${Math.floor(100 + Math.random() * 900)}`;
+                await fetch('/api/v1/telemetry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        entity_id: mockEnt,
+                        entity_type: 'user',
+                        timestamp: new Date().toISOString(),
+                        source_ip: '10.0.0.15',
+                        resource_accessed: '/api/v1/data',
+                        auth_method: 'token',
+                        session_duration: 15.0,
+                        device_fingerprint: 'Linux x86_64'
+                    })
+                });
+            } catch (e) {
+                // Ignore background ticker errors
+            }
+        }, 3000);
+    }
+
     // Initial render & WS connect
     drawChart();
     renderShapBars();
     renderAlertTable();
     updateModelMetricsMatrix();
     initWebSocket();
+    initRealTimeTelemetryStream();
 
     window.addEventListener('resize', drawChart);
 });

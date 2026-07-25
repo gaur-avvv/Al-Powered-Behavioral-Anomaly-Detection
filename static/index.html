@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Behavioral Anomaly Detection | Security Analyst Operations</title>
-    <meta name="description" content="Real-time AI-Powered Behavioral Anomaly Detection, SHAP Explainability & Model Performance Matrix">
+    <title>AEGIS.AI — Real-Time Security Analyst Operations Dashboard</title>
+    <meta name="description" content="Real-time AI-Powered Behavioral Anomaly Detection, Tiered Fallbacks, SHAP Explainability & Model Performance Matrix">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@
             <header class="top-header">
                 <div class="header-title">
                     <h1>Real-Time Security Dashboard</h1>
-                    <p>Sub-100ms Sequence Anomaly Detection, GNN & SHAP Feature Attribution</p>
+                    <p>Sub-100ms Sequence Anomaly Detection, GNN &amp; SHAP Feature Attribution</p>
                 </div>
 
                 <div class="header-actions">
@@ -88,6 +88,20 @@
                 </div>
             </header>
 
+            <!-- Real-Time Live Ingestion Telemetry Stream Bar -->
+            <section class="glass-panel telemetry-stream-bar" style="margin-bottom: 1.5rem; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-left: 4px solid #38bdf8;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="pulse-dot" style="background: #10b981;"></span>
+                    <strong style="color: #f8fafc; font-size: 0.9rem;">LIVE TELEMETRY STREAM:</strong>
+                    <span style="color: #94a3b8; font-size: 0.85rem;" id="stream-ticker-info">Ingesting real-time log packets (250 events/sec)...</span>
+                </div>
+                <div style="display: flex; gap: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;">
+                    <div><span style="color: #64748b;">Processed Events:</span> <strong style="color: #38bdf8;" id="ticker-events-count">14,920</strong></div>
+                    <div><span style="color: #64748b;">Active Entities:</span> <strong style="color: #a855f7;" id="ticker-entities-count">200</strong></div>
+                    <div><span style="color: #64748b;">Queue Depth:</span> <strong style="color: #10b981;" id="ticker-queue-depth">0</strong></div>
+                </div>
+            </section>
+
             <!-- Metrics Overview Cards -->
             <section class="metrics-grid">
                 <div class="metric-card glass-panel">
@@ -98,14 +112,14 @@
                         </div>
                     </div>
                     <div class="metric-value" id="val-health">99.9%</div>
-                    <div class="metric-sub text-green">Operational & Healthy</div>
+                    <div class="metric-sub text-green">Operational &amp; Healthy</div>
                 </div>
 
                 <div class="metric-card glass-panel">
                     <div class="metric-header">
                         <span class="metric-title">Detection Latency (P95)</span>
                         <div class="metric-icon blue">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
                         </div>
                     </div>
                     <div class="metric-value" id="val-latency">24.5 ms</div>
@@ -138,8 +152,8 @@
             <!-- Complete Model Evaluation Matrix Section -->
             <section class="glass-panel metrics-matrix-section" id="metrics-section">
                 <div class="panel-header">
-                    <h3>Model Performance & Evaluation Matrix</h3>
-                    <span class="panel-subtitle">Train / Validation / Test Loss & Hyperparameter Tuning Metrics</span>
+                    <h3>Model Performance &amp; Evaluation Matrix</h3>
+                    <span class="panel-subtitle">Train / Validation / Test Loss &amp; Hyperparameter Tuning Metrics</span>
                 </div>
                 <div class="matrix-grid">
                     <div class="matrix-box">
@@ -164,7 +178,7 @@
                         <div class="m-row"><span>ROC-AUC Score:</span> <strong id="m-cls-auc">96.8%</strong></div>
                     </div>
                     <div class="matrix-box">
-                        <span class="m-label">Feature Selection & Drift</span>
+                        <span class="m-label">Feature Selection &amp; Drift</span>
                         <div class="m-row"><span>Selector Method:</span> <strong>L1 + Stability Selection</strong></div>
                         <div class="m-row"><span>Selected Features:</span> <strong>7 Features</strong></div>
                         <div class="m-row"><span>Auto-Retrain Drift:</span> <strong id="m-drift-status" class="text-green">NO DRIFT</strong></div>
@@ -187,7 +201,7 @@
                 </div>
 
                 <!-- SHAP Explainability Panel -->
-                <div class="glass-panel explain-card">
+                <div class="glass-panel explain-card" id="explainability">
                     <div class="panel-header">
                         <h3>SHAP Feature Attributions</h3>
                         <span class="panel-subtitle">Top contributions for latest anomaly score</span>
@@ -201,7 +215,7 @@
             <!-- Live Alert Queue & Simulator Grid -->
             <div class="dashboard-grid bottom-grid">
                 <!-- Priority Ranked Alert Queue -->
-                <div class="glass-panel alerts-panel">
+                <div class="glass-panel alerts-panel" id="alerts">
                     <div class="panel-header">
                         <h3>Priority Risk-Ranked Alert Feed</h3>
                         <span class="badge badge-purple" id="alert-count-badge">3 Active</span>
@@ -222,6 +236,9 @@
                                 <!-- Dynamic rows -->
                             </tbody>
                         </table>
+                    </div>
+                    <div style="margin-top: 0.75rem; text-align: center; color: #64748b; font-size: 0.78rem;">
+                        💡 <em>Click on any alert row to view detailed diagnostic attributions &amp; routing path.</em>
                     </div>
                 </div>
 
@@ -248,7 +265,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="sim-entity">Target Entity ID</label>
-                                <input type="text" id="sim-entity" value="USR-SIM-8082" required>
+                                <input type="text" id="sim-entity" value="" placeholder="Auto-generated per attack vector">
                             </div>
                             <div class="form-group">
                                 <label for="sim-intensity">Attack Signal Intensity</label>
@@ -262,7 +279,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="sim-geo">Origin Geo Location</label>
-                                <select id="sim-geo">
+                                <select id="sim-geo" class="select-input">
                                     <option value="EU-West">EU-West (Frankfurt)</option>
                                     <option value="AP-South">AP-South (Mumbai)</option>
                                     <option value="US-East">US-East (N. Virginia)</option>
@@ -277,6 +294,19 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Alert Inspection Modal / Drawer -->
+    <div id="alert-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>🔍 Alert Diagnostic Inspection</h3>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Dynamic inspection content -->
+            </div>
+        </div>
     </div>
 
     <script src="/static/app.js"></script>
