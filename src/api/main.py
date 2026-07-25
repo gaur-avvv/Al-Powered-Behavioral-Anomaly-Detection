@@ -24,6 +24,13 @@ from src.explainability.explanation_engine import ExplainableAI
 from src.dashboard.dashboard_service import AnalystDashboard
 from src.monitoring.monitoring_service import MonitoringService
 from src.monitoring.drift_monitor import AsyncRetrainingEngine, ADWINLight
+from src.dataset.state_tracker import StreamingStateTracker
+from src.monitoring.fallback_manager import (
+    FailSafeRuleEngine,
+    ColdStartManager,
+    LoadSheddingManager,
+    RetrainingCircuitBreaker
+)
 from src.report.report_generator import PerformanceReport
 from src.optimization.performance_optimizer import PerformanceOptimizer
 
@@ -45,6 +52,13 @@ app.add_middleware(
 # Ingestion Queue for Decoupled High-Concurrency Telemetry Ingestion
 INGESTION_QUEUE: asyncio.Queue = asyncio.Queue(maxsize=10000)
 drift_engine = AsyncRetrainingEngine(target_pr_auc=0.90, max_fpr_budget=0.03)
+
+# Stateful Tracker & Tiered Fallback Managers
+state_tracker = StreamingStateTracker(sequence_length=10, feature_dim=6)
+failsafe_rules = FailSafeRuleEngine()
+cold_start_mgr = ColdStartManager()
+load_shedder = LoadSheddingManager(queue_threshold=5000)
+circuit_breaker = RetrainingCircuitBreaker(cooldown_seconds=3600.0)
 
 # Core domain singletons
 profiler = EntityBaselineProfiler(seq_length=10)
@@ -536,17 +550,63 @@ async def serve_dashboard_ui() -> HTMLResponse:
 
 
 async def log_processing_worker() -> None:
-    """Async telemetry ingestion worker consuming logs from INGESTION_QUEUE."""
+    """
+    Async telemetry ingestion worker consuming logs from INGESTION_QUEUE.
+    Executes stateful rolling sequence tracking, 4-tier fallback routing,
+    ADWIN drift monitoring, and WebSocket alert broadcasts.
+    """
     while True:
         try:
             log_item: TelemetryLogInput = await INGESTION_QUEUE.get()
-            seq = np.ones((1, 10, 3), dtype=np.float32) * 1.5
-            det_res = detector.detect_sequence_anomaly(log_item.entity_id, seq)
-            score = float(det_res.get("combined_score", 0.5))
+            log_dict = log_item.dict()
+            q_depth = INGESTION_QUEUE.qsize()
 
-            # Feed ADWIN drift engine
-            mock_truth = 1 if score > 0.65 else 0
-            drift_engine.ingest_inference_telemetry(mock_truth, score)
+            # Level 3: Dynamic Load Shedding Check
+            load_shedder.check_load_shedding(q_depth)
+
+            # Roll sequence state via StreamingStateTracker
+            rolled_seq, is_mature = state_tracker.process_and_roll_log(log_dict)
+
+            if not is_mature:
+                # Level 2: Peer-Group Cold-Start Resolution Fallback
+                ts_str = str(log_dict.get("timestamp", ""))
+                try:
+                    cur_hour = datetime.strptime(ts_str.replace("Z", ""), "%Y-%m-%dT%H:%M:%S").hour
+                except Exception:
+                    cur_hour = datetime.utcnow().hour
+
+                inference_res = cold_start_mgr.resolve_cold_start_risk(
+                    entity_id=log_item.entity_id,
+                    entity_type=log_item.entity_type,
+                    current_hour=cur_hour,
+                    session_duration=log_item.session_duration
+                )
+            else:
+                try:
+                    # Primary Track: Attempt neural pipeline resolution
+                    seq_arr = np.array(rolled_seq, dtype=np.float32).reshape(1, 10, 6)
+                    det_res = detector.detect_sequence_anomaly(log_item.entity_id, seq_arr)
+                    score = float(det_res.get("combined_score", 0.5))
+                    clf_res = classifier.classify_anomaly({"session_duration": log_item.session_duration})
+
+                    inference_res = {
+                        "score": score,
+                        "confidence": float(det_res.get("confidence", 0.90)),
+                        "category": clf_res.get("primary_category", "anomaly"),
+                        "routing_path": "Bi-LSTM+GNN-Full-Inference"
+                    }
+                except Exception as e:
+                    # Level 1: Deterministic Fail-Safe Rule Fallback
+                    inference_res = failsafe_rules.execute_fail_safe_rules(log_dict, str(e))
+
+            score = float(inference_res.get("score", 0.10))
+
+            # Level 4: Circuit Breaker Gated ADWIN Drift Retraining
+            if circuit_breaker.can_trigger_retrain():
+                mock_truth = 1 if score > 0.65 else 0
+                retrain_triggered = drift_engine.ingest_inference_telemetry(mock_truth, score)
+                if retrain_triggered:
+                    circuit_breaker.record_retrain_completion()
 
             INGESTION_QUEUE.task_done()
         except asyncio.CancelledError:
