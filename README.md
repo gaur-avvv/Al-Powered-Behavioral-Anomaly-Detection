@@ -216,26 +216,27 @@ graph TD
 AEGIS.AI employs a comprehensive suite of machine learning, deep learning, graph modeling, and statistical algorithms engineered for low-latency anomaly detection:
 
 ### 1. Data Encoders & Preprocessing Layer
-- **StandardScaler**: Z-score feature normalization preserving variance structure across numerical telemetry.
+- **StandardScaler**: Z-score feature normalization preserving variance structure across numerical telemetry:
+  $$\mathbf{z} = \frac{\mathbf{x} - \boldsymbol{\mu}}{\boldsymbol{\sigma}}$$
 - **Categorical Feature Encoders**: One-Hot and Ordinal encoding for authentication protocols, geolocation tokens, and entity types.
-- **Graph Node Feature Matrix Constructor**: Converts unstructured entity interaction logs into normalized feature matrices and topological edge adjacency tensors.
+- **Graph Node Feature Matrix Constructor**: Converts unstructured entity interaction logs into normalized feature matrices $\mathbf{X} \in \mathbb{R}^{N \times F}$ and topological edge adjacency tensors $\mathbf{E} \in \mathbb{R}^{2 \times M}$.
 
 ### 2. Sequence Anomaly Detection — PyTorch LSTM Autoencoder
 - **Architecture**: Deep recurrent autoencoder with bottleneck compression and optional multi-head attention.
-- **Encoder**: 2-layer Bidirectional LSTM projecting input sequence into latent representation.
-- **Decoder**: Unrolls latent representation back to reconstruct sequence.
+- **Encoder**: 2-layer Bidirectional LSTM projecting input sequence $\mathbf{X}_{1:T}$ into latent vector $\mathbf{z} \in \mathbb{R}^d$.
+- **Decoder**: Unrolls latent vector $\mathbf{z}$ back to reconstruct sequence $\mathbf{\hat{X}}_{1:T}$.
 - **Anomaly Score Formulation**: Reconstructive Mean Squared Error (MSE) loss per sequence sample:
-  ```
-  Loss_reconstruction = (1 / T) * sum_{t=1}^T || X_t - X_hat_t ||^2
-  ```
+  $$\text{Loss}_{\text{reconstruction}} = \frac{1}{T} \sum_{t=1}^{T} \left\| \mathbf{X}_t - \mathbf{\hat{X}}_t \right\|_2^2$$
 
 ### 3. Graph Anomaly Detection — PyTorch Graph Autoencoder
-- **Message Passing Layers**: Supports Graph Convolutional Networks (GCN), Graph Attention Networks (GAT), and GraphSAGE propagation.
+- **Message Passing Layers**: Supports Graph Convolutional Networks (GCN), Graph Attention Networks (GAT), and GraphSAGE propagation:
+  $$\mathbf{H}^{(l+1)} = \sigma \left( \mathbf{\tilde{D}}^{-\frac{1}{2}} \mathbf{\tilde{A}} \mathbf{\tilde{D}}^{-\frac{1}{2}} \mathbf{H}^{(l)} \mathbf{W}^{(l)} \right)$$
 - **Co-Access Graph Topology**: Dynamic graph representation where entities (users, IP addresses, resources) form nodes and interactions form weighted edges.
 - **Graph Bottleneck**: Compresses high-dimensional node connectivity into low-dimensional graph embeddings.
 
 ### 4. Multi-Class Attack Taxonomy Classifier
-Categorizes detected sequence anomalies into 5 distinct threat taxonomy categories:
+Categorizes detected sequence anomalies into 5 distinct threat taxonomy categories using Softmax probability assignment:
+$$P(Y = k \mid \mathbf{x}) = \frac{\exp(\mathbf{w}_k^T \mathbf{x} + b_k)}{\sum_{j=1}^{K} \exp(\mathbf{w}_j^T \mathbf{x} + b_j)}$$
 1. **Credential Stuffing**
 2. **Data Exfiltration**
 3. **Privilege Escalation**
@@ -243,13 +244,17 @@ Categorizes detected sequence anomalies into 5 distinct threat taxonomy categori
 5. **Lateral Movement**
 
 ### 5. Embedded Feature Selection Methods
-- **L1 Regularization (LASSO)**: L1-penalized `LogisticRegressionCV` driving irrelevant coefficient weights strictly to 0.
-- **Tree Stability Selection**: Random Forest ensemble with bootstrap resamples measuring feature selection frequencies.
-- **Neural Integrated Gradients**: PyTorch gradient-based attribution computing path integrals from baseline inputs.
+- **L1 Regularization (LASSO)**: L1-penalized regression driving irrelevant coefficient weights strictly to zero:
+  $$\min_{\mathbf{w}} \frac{1}{2n} \left\| \mathbf{y} - \mathbf{X}\mathbf{w} \right\|_2^2 + \alpha \left\| \mathbf{w} \right\|_1$$
+- **Tree Stability Selection**: Random Forest ensemble with bootstrap resamples measuring feature selection frequencies across $N=50$ bootstrap iterations.
+- **Neural Integrated Gradients**: PyTorch gradient-based attribution computing path integrals from baseline inputs $\mathbf{x}'$:
+  $$\text{IG}_i(\mathbf{x}) = (x_i - x'_i) \times \int_{0}^{1} \frac{\partial F(\mathbf{x}' + \alpha (\mathbf{x} - \mathbf{x}'))}{\partial x_i} d\alpha$$
 
 ### 6. Dimensionality Reduction & Manifold Projection
-- **Principal Component Analysis (PCA)**: Linear orthogonal projection preserving maximum variance.
-- **t-SNE (t-Distributed Stochastic Neighbor Embedding)**: Non-linear 2D/3D manifold reduction converting high-dimensional Euclidean distances into conditional probabilities.
+- **Principal Component Analysis (PCA)**: Linear orthogonal projection preserving maximum variance:
+  $$\max_{\mathbf{w}: \|\mathbf{w}\|=1} \text{Var}(\mathbf{X}\mathbf{w}) = \max_{\mathbf{w}: \|\mathbf{w}\|=1} \mathbf{w}^T \mathbf{\Sigma} \mathbf{w}$$
+- **t-SNE (t-Distributed Stochastic Neighbor Embedding)**: Non-linear 2D/3D manifold reduction converting high-dimensional Euclidean distances into conditional probabilities:
+  $$p_{j|i} = \frac{\exp(-\|\mathbf{x}_i - \mathbf{x}_j\|^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-\|\mathbf{x}_i - \mathbf{x}_k\|^2 / 2\sigma_i^2)}$$
 - **UMAP (Uniform Manifold Approximation & Projection)**: Riemannian geometry-based manifold learning with automated PCA fallback.
 
 ---
