@@ -98,5 +98,5 @@ All pipeline modules are organized into a clean production architecture:
 
 - [`scripts/train_models.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/scripts/train_models.py): Production PyTorch model training pipeline featuring `AdamW` weight decay, `CosineAnnealingLR`, and `EarlyStopping` checkpointing.
 - [`training/model_training_pipeline.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/training/model_training_pipeline.py): Clean production pipeline module for feature extraction, training, and artifact generation.
-- [`scripts/generate_all_plots.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/scripts/generate_all_plots.py): Enterprise asset generation pipeline producing all 8 high-resolution figures in `assets/`.
-- [`scripts/generate_fallback_diagrams.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/scripts/generate_fallback_diagrams.py): Technical architecture & fallback diagram generation script.
+- [`scripts/visualization_pipeline.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/scripts/visualization_pipeline.py): Enterprise asset generation pipeline producing all high-resolution figures in `assets/`.
+- [`scripts/architecture_diagrams.py`](file:///c:/Users/Dell/Desktop/Al-Powered%20Behavioral%20Anomaly%20Detection/scripts/architecture_diagrams.py): Technical architecture & fallback diagram generation script.
