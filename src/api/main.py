@@ -9,6 +9,9 @@ import json
 import asyncio
 import numpy as np
 from datetime import datetime, timezone
+from faker import Faker
+
+fake = Faker()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Header, Depends, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -433,8 +436,8 @@ async def simulate_attack_event(
         "top_categories": class_res["top_categories"],
         "latency_ms": latency_ms,
         "attack_type": attack,
-        "source_ip": payload.source_ip or "192.168.1.100",
-        "geo_location": payload.geo_location or "US-East",
+        "source_ip": payload.source_ip or fake.ipv4_public(),
+        "geo_location": payload.geo_location or f"{fake.country_code()} - {fake.city()}",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 

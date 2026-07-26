@@ -31,3 +31,4 @@ pytest-asyncio>=0.21.0
 # --- Utilities ---
 joblib>=1.2.0
 PyYAML>=6.0
+faker>=20.0.0

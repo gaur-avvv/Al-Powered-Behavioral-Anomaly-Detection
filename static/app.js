@@ -556,6 +556,22 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAlertTable();
     }
 
+    // Realistic Public IPv4 Address Generator (Faker style)
+    function generateRandomIp() {
+        const firstOctet = [185, 198, 103, 45, 89, 194, 212, 178, 91][Math.floor(Math.random() * 9)];
+        return `${firstOctet}.${Math.floor(Math.random() * 254 + 1)}.${Math.floor(Math.random() * 254 + 1)}.${Math.floor(Math.random() * 254 + 1)}`;
+    }
+
+    // Realistic Geo Location Generator (Faker style)
+    function generateRandomGeo() {
+        const locations = [
+            "US (N. Virginia)", "EU (Frankfurt)", "AP (Mumbai)", "JP (Tokyo)",
+            "BR (São Paulo)", "UK (London)", "SG (Singapore)", "AU (Sydney)",
+            "CA (Central)", "FR (Paris)", "NL (Amsterdam)", "KR (Seoul)"
+        ];
+        return locations[Math.floor(Math.random() * locations.length)];
+    }
+
     // Auto-Generate Entity ID per Attack Vector
     function generateEntityForAttack(attackType) {
         const randNum = Math.floor(1000 + Math.random() * 9000);
@@ -571,13 +587,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return `USR-SIM-${randNum}`;
     }
 
-    // Update attack description box
+    // Update attack description box & fill dynamic random telemetry inputs
     function updateAttackDescription(attackType) {
-        if (!simAttackDesc) return;
-        const info = ATTACK_TAXONOMY[attackType];
-        if (info) {
-            simAttackDesc.innerText = info.desc;
+        if (simAttackDesc) {
+            const info = ATTACK_TAXONOMY[attackType];
+            if (info) {
+                simAttackDesc.innerText = info.desc;
+            }
         }
+        const ipInput = document.getElementById('sim-ip');
+        if (ipInput) ipInput.value = generateRandomIp();
+
+        const geoInput = document.getElementById('sim-geo');
+        if (geoInput) geoInput.value = generateRandomGeo();
     }
 
     // 7. Cyber Attack Simulator Controls
