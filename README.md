@@ -165,8 +165,8 @@ Categorizes detected sequence anomalies into **8 distinct UEBA behavioral threat
 
 ## 📈 Model Evaluation & Data Visualization Matrices
 
-### 1. Training, Validation & Test Loss Convergence Curves (Bi-LSTM Autoencoder)
-> PyTorch Sequence Autoencoder · 50 Training Epochs · MSE Reconstruction Loss Convergence (Train MSE: 0.0084, Val MSE: 0.0092, Test MSE: 0.0098)
+### 1. Training, Validation & Test Loss Convergence Curves (Bi-LSTM & GNN Autoencoders)
+> PyTorch Sequence & Graph-Behaviour Autoencoders · 50 Training Epochs · MSE Reconstruction Loss Convergence (Bi-LSTM Test MSE: 0.00018, GNN Test MSE: 0.00019)
 
 ![Train, Validation & Test Loss Convergence Curves](assets/loss_curves.png)
 
@@ -221,8 +221,8 @@ Evaluation metrics over `synthetic_access_logs_10000.csv` via **5-Fold TimeSerie
 
 | Subsystem / Model | Metric | Train | Validation | Test | Status |
 |---|---|---|---|---|---|
-| **LSTM Autoencoder** | MSE Reconstruction Loss | `0.0084` | `0.0092` | `0.0098` | **OPTIMAL** |
-| **PyTorch Graph Autoencoder** | Node Reconstruction Loss | `0.0125` | `0.0141` | `0.0148` | **OPTIMAL** |
+| **LSTM Autoencoder** | MSE Reconstruction Loss | `0.00026` | `0.00018` | `0.00018` | **OPTIMAL** |
+| **PyTorch Graph Autoencoder** | Node Reconstruction Loss | `0.00016` | `0.00021` | `0.00019` | **OPTIMAL** |
 | **Ensemble Attack Classifier** | Accuracy (TimeSeriesSplit CV, 5-Fold Mean) | `96.2%` | `94.7%` | `94.7%` | **WELL-FITTED** |
 | **Ensemble Attack Classifier** | F1-Score (Weighted, 8-Class) | `96.0%` | `93.8%` | `93.8%` | **WELL-FITTED** |
 | **Ensemble Attack Classifier** | ROC-AUC (OvR, 8-Class mean) | `98.1%` | `97.3%` | `96.9%` | **EXCELLENT** |
@@ -261,22 +261,28 @@ pip install -r requirements.txt
 ### Execution Commands (All Operating Systems)
 
 ```bash
-# 1. Test Stateful Sequence Rolling Tracker
+# 1. Run Complete Visualization & Asset Generation Pipeline
+python scripts/visualization_pipeline.py
+
+# 2. Render System Architecture & Tiered Fallback Flowcharts
+python scripts/architecture_diagrams.py
+
+# 3. Test Stateful Sequence Rolling Tracker
 python -m src.dataset.state_tracker
 
-# 2. Test 4-Tier Fallback Manager Engine
+# 4. Test 4-Tier Fallback Manager Engine
 python -m src.monitoring.fallback_manager
 
-# 3. Test ADWIN Drift Engine & Retraining Loop
+# 5. Test ADWIN Drift Engine & Retraining Loop
 python -m src.monitoring.drift_monitor
 
-# 4. Run Comprehensive 24-Point Module Verification
+# 6. Run Comprehensive 24-Point Module Verification
 python -m tests.verify_all_integrated
 
-# 5. Run Pytest Suite (37/37 PASSED)
+# 7. Run Pytest Suite (37/37 PASSED)
 pytest -v
 
-# 6. Launch Server with Real-Time Ingestion Pipeline & Web UI
+# 8. Launch Server with Real-Time Ingestion Pipeline & Web UI
 python -m uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
