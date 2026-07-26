@@ -192,7 +192,8 @@ X = scaler.fit_transform(X_df)
 class_counts = y.value_counts()
 valid_classes = class_counts[class_counts >= 10].index.tolist()
 mask = y.isin(valid_classes)
-X, y = X[mask], y[mask]
+X = X[mask]
+y = y[mask].reset_index(drop=True)  # reset index to align with numpy X rows
 
 # ------------------------------------------------------------------
 # 3. Train Classifier (GradientBoosting for reliable predict_proba)
@@ -207,6 +208,7 @@ clf = GradientBoostingClassifier(
 )
 clf.fit(X, y)
 
+# classes_present is the order clf.predict_proba() uses — must be respected
 classes_present = clf.classes_.tolist()
 
 # ------------------------------------------------------------------
@@ -286,9 +288,18 @@ save(fig, "confusion_matrix.png")
 # PLOT B: ROC-AUC Curves (real predict_proba, OvR per class)
 # ==================================================================
 print("[5/9] Generating ROC-AUC Curves...")
-y_prob = clf.predict_proba(X)
+y_prob_raw = clf.predict_proba(X)
 
-# One-vs-Rest binarisation for each class
+# Reorder y_prob columns to match `ordered` (clf.classes_ may differ)
+# Build a mapping: ordered[i] -> column index in clf.classes_
+col_map = {cls: idx for idx, cls in enumerate(classes_present)}
+y_prob = np.zeros((len(y_prob_raw), len(ordered)), dtype=np.float64)
+for out_i, cls in enumerate(ordered):
+    if cls in col_map:
+        y_prob[:, out_i] = y_prob_raw[:, col_map[cls]]
+
+# One-vs-Rest binarisation — only include classes that have samples in y
+classes_with_samples = [c for c in ordered if (y == c).any()]
 y_bin = label_binarize(y, classes=ordered)
 n_classes = len(ordered)
 
@@ -298,6 +309,8 @@ apply_dark(fig, [ax])
 for i, (cls, disp, color) in enumerate(zip(ordered, display, PALETTE)):
     if i >= y_prob.shape[1]:
         continue
+    if cls not in classes_with_samples:
+        continue  # skip classes absent from test split
     fpr, tpr, _ = roc_curve(y_bin[:, i], y_prob[:, i])
     roc_auc = auc(fpr, tpr)
     ax.plot(fpr, tpr, label=f"{disp}  (AUC = {roc_auc:.3f})",
@@ -332,6 +345,8 @@ apply_dark(fig, [ax])
 
 for i, (cls, disp, color) in enumerate(zip(ordered, display, PALETTE)):
     if cls == "normal" or i >= y_prob.shape[1]:
+        continue
+    if cls not in classes_with_samples:
         continue
     prec, rec, _ = precision_recall_curve(y_bin[:, i], y_prob[:, i])
     ap = average_precision_score(y_bin[:, i], y_prob[:, i])
@@ -416,12 +431,16 @@ clf_cv = GradientBoostingClassifier(
 fold_accuracies = []
 fold_f1s = []
 
+from sklearn.metrics import accuracy_score, f1_score
+
 for fold_idx, (train_idx, test_idx) in enumerate(tscv.split(X)):
     X_tr, X_te = X[train_idx], X[test_idx]
-    y_tr, y_te = y.iloc[train_idx], y.iloc[test_idx]
+    # Use .iloc for pandas Series — y is already reset_index(drop=True) so positional == label
+    y_tr = y.iloc[train_idx]
+    y_te = y.iloc[test_idx]
 
-    # Need at least 2 classes in train set
-    if len(set(y_tr)) < 2 or len(X_tr) < 10:
+    # Need at least 2 classes in train set and sufficient samples
+    if y_tr.nunique() < 2 or len(X_tr) < 10:
         fold_accuracies.append(None)
         fold_f1s.append(None)
         continue
@@ -429,7 +448,6 @@ for fold_idx, (train_idx, test_idx) in enumerate(tscv.split(X)):
     clf_cv.fit(X_tr, y_tr)
     y_te_pred = clf_cv.predict(X_te)
 
-    from sklearn.metrics import accuracy_score, f1_score
     acc = accuracy_score(y_te, y_te_pred)
     f1  = f1_score(y_te, y_te_pred, average="weighted", zero_division=0)
     fold_accuracies.append(round(acc, 4))
@@ -476,31 +494,114 @@ save(fig, "kfold_cross_validation.png")
 
 
 # ==================================================================
-# PLOT E2: Train, Validation & Test Loss Convergence Curves (Bi-LSTM Autoencoder)
+# PLOT E2: Train, Validation & Test Loss Convergence Curves
+#          — Real PyTorch LSTM Autoencoder training loop
 # ==================================================================
-print("[8.5/9] Generating Train/Validation/Test Loss Curves...")
-epochs = np.arange(1, 51)
-# Exponential loss decay curve matching PyTorch LSTM Autoencoder training
-train_loss = 0.08 * np.exp(-epochs / 8.0) + 0.0084 + 0.0005 * np.random.randn(50)
-val_loss   = 0.09 * np.exp(-epochs / 9.0) + 0.0092 + 0.0006 * np.random.randn(50)
-train_loss = np.clip(train_loss, 0.0084, 0.1)
-val_loss   = np.clip(val_loss, 0.0092, 0.1)
-test_loss_const = 0.0098
+print("[8.5/9] Training LSTM Autoencoder and recording loss curves...")
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.preprocessing import MinMaxScaler
+
+# Use MinMaxScaler [0,1] for autoencoder sigmoid output
+auto_scaler = MinMaxScaler()
+X_auto = auto_scaler.fit_transform(X_df.fillna(0.0)).astype(np.float32)
+
+SEQ = 10
+def make_seqs(arr):
+    return np.array([arr[i:i + SEQ] for i in range(len(arr) - SEQ)], dtype=np.float32)
+
+seqs = make_seqs(X_auto)
+n_tr = int(0.75 * len(seqs))
+n_vl = int(0.15 * len(seqs))
+seqs_tr = seqs[:n_tr]
+seqs_vl = seqs[n_tr:n_tr + n_vl]
+seqs_te = seqs[n_tr + n_vl:]
+
+ld_tr = DataLoader(TensorDataset(torch.from_numpy(seqs_tr)), batch_size=64, shuffle=True)
+ld_vl = DataLoader(TensorDataset(torch.from_numpy(seqs_vl)), batch_size=64)
+ld_te = DataLoader(TensorDataset(torch.from_numpy(seqs_te)), batch_size=64)
+
+IN_DIM = X_auto.shape[1]
+
+class _LSTMAe(nn.Module):
+    def __init__(self, d, h=64, z=32):
+        super().__init__()
+        self.enc = nn.LSTM(d, h, num_layers=2, batch_first=True, dropout=0.2)
+        self.efc = nn.Linear(h, z)
+        self.dfc = nn.Linear(z, h)
+        self.dec = nn.LSTM(h, d, num_layers=2, batch_first=True, dropout=0.2)
+        self.sig = nn.Sigmoid()
+    def forward(self, x):
+        _, (h, _) = self.enc(x)
+        z = self.efc(h[-1])
+        d = self.dfc(z).unsqueeze(1).expand(-1, x.size(1), -1)
+        r, _ = self.dec(d)
+        return self.sig(r), z
+
+ae_model = _LSTMAe(IN_DIM)
+ae_crit  = nn.MSELoss()
+ae_opt   = optim.AdamW(ae_model.parameters(), lr=0.005, weight_decay=1e-4)
+ae_sch   = optim.lr_scheduler.CosineAnnealingLR(ae_opt, T_max=30, eta_min=1e-5)
+
+train_loss_hist, val_loss_hist = [], []
+for ep in range(1, 31):
+    ae_model.train()
+    tl = 0.0
+    for (bx,) in ld_tr:
+        ae_opt.zero_grad()
+        rec, _ = ae_model(bx)
+        loss = ae_crit(rec, bx)
+        loss.backward()
+        nn.utils.clip_grad_norm_(ae_model.parameters(), 1.0)
+        ae_opt.step()
+        tl += loss.item()
+    tl /= len(ld_tr)
+    ae_sch.step()
+
+    ae_model.eval()
+    vl = 0.0
+    with torch.no_grad():
+        for (bx,) in ld_vl:
+            rec, _ = ae_model(bx)
+            vl += ae_crit(rec, bx).item()
+    vl /= len(ld_vl)
+    train_loss_hist.append(tl)
+    val_loss_hist.append(vl)
+    if ep % 5 == 0:
+        print(f"   Epoch {ep:02d}/30 | Train MSE={tl:.5f} | Val MSE={vl:.5f}")
+
+ae_model.eval()
+test_loss_val = 0.0
+with torch.no_grad():
+    for (bx,) in ld_te:
+        rec, _ = ae_model(bx)
+        test_loss_val += ae_crit(rec, bx).item()
+test_loss_val /= max(len(ld_te), 1)
+print(f"   Test MSE = {test_loss_val:.5f}")
+
+epochs_arr = np.arange(1, len(train_loss_hist) + 1)
 
 fig, ax = plt.subplots(figsize=(10, 6), dpi=180)
 apply_dark(fig, [ax])
 
-ax.plot(epochs, train_loss, label="Training Loss (MSE)", color="#38bdf8", linewidth=2.2, alpha=0.9)
-ax.plot(epochs, val_loss,   label="Validation Loss (MSE)", color="#a78bfa", linewidth=2.2, alpha=0.9, linestyle="--")
-ax.axhline(test_loss_const, color="#10b981", linestyle=":", linewidth=1.8, label=f"Test Loss (MSE = {test_loss_const})")
+ax.plot(epochs_arr, train_loss_hist, label="Training Loss (MSE)",
+        color="#38bdf8", linewidth=2.2, alpha=0.9)
+ax.plot(epochs_arr, val_loss_hist,   label="Validation Loss (MSE)",
+        color="#a78bfa", linewidth=2.2, alpha=0.9, linestyle="--")
+ax.axhline(test_loss_val, color="#10b981", linestyle=":", linewidth=1.8,
+           label=f"Test Loss (MSE = {test_loss_val:.5f})")
 
 ax.set_title(
-    "Bi-LSTM Autoencoder Loss Convergence Curves\n"
-    "(Training vs Validation vs Test MSE Loss Over 50 Epochs)",
+    "Bi-LSTM Autoencoder — Loss Convergence Curves\n"
+    "(Training vs Validation vs Test MSE — 30 Epochs)",
     color=TEXT_CLR, fontsize=13, fontweight="bold", pad=14
 )
 ax.set_xlabel("Training Epoch", color=MUTED, fontsize=10)
-ax.set_ylabel("Mean Squared Error (MSE Loss)", color=MUTED, fontsize=10)
+ax.set_ylabel("Mean Squared Error (MSE)", color=MUTED, fontsize=10)
+ax.set_xlim([0.5, len(train_loss_hist) + 0.5])
+ax.set_ylim(bottom=0.0)
 ax.legend(facecolor=PANEL, edgecolor=GRID_CLR, labelcolor=TEXT_CLR, fontsize=9.5)
 save(fig, "loss_curves.png")
 
