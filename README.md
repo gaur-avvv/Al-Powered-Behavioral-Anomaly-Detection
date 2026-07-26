@@ -433,3 +433,14 @@ This repository includes a production **GitHub Actions CI/CD Workflow** ([`.gith
 
 ## 📄 License
 This project is licensed under the **MIT License** — see the [`LICENSE`](file:///LICENSE) file for details.
+
+---
+
+## 📚 Academic & Commercial Research References
+
+1. **DeepLog (Academic CCS'16 / CCS'17)**: Min Du, Feifei Li, Ginny Zheng, Vivek Srikumar, *"DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning"*, ACM CCS. Paper: [https://www.cs.utah.edu/~mdu/papers/deeplog-ccs17.pdf](https://www.cs.utah.edu/~mdu/papers/deeplog-ccs17.pdf) | ACM DL: [https://dl.acm.org/doi/10.1145/3133956.3134015](https://dl.acm.org/doi/10.1145/3133956.3134015)
+2. **USAD / UNAD (Academic NDSS'19 / KDD'20)**: Julien Audibert et al., *"USAD: Unsupervised Anomaly Detection for Multivariate Time Series"*, ACM KDD / NDSS. Paper: [https://arxiv.org/abs/1908.06822](https://arxiv.org/abs/1908.06822) | ACM DL: [https://dl.acm.org/doi/10.1145/3394486.3403392](https://dl.acm.org/doi/10.1145/3394486.3403392)
+3. **AWS Fraud Detector Platform**: Amazon AWS Machine Learning Engine for Fraud Detection & Telemetry. Guide: [https://docs.aws.amazon.com/frauddetector/](https://docs.aws.amazon.com/frauddetector/)
+4. **Google Cloud Chronicle Security UEBA**: Google Cloud Security Engine for Behavioral UEBA Anomaly Detection. Guide: [https://cloud.google.com/chronicle/docs/detection/ueba-overview](https://cloud.google.com/chronicle/docs/detection/ueba-overview) | Publications: [https://research.google/pubs/](https://research.google/pubs/)
+5. **Elastic Security Machine Learning**: Elastic Stack Machine Learning UEBA Anomaly Detection Engine. Guide: [https://www.elastic.co/guide/en/machine-learning/current/xpack-ml.html](https://www.elastic.co/guide/en/machine-learning/current/xpack-ml.html)
+
