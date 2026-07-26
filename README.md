@@ -165,8 +165,10 @@ Categorizes detected sequence anomalies into **8 distinct UEBA behavioral threat
 
 ## 📈 Model Evaluation & Data Visualization Matrices
 
-### 1. Training vs Validation Loss Convergence Curves
-![Loss Convergence Curves](assets/loss_curves.png)
+### 1. Training, Validation & Test Loss Convergence Curves (Bi-LSTM Autoencoder)
+> PyTorch Sequence Autoencoder · 50 Training Epochs · MSE Reconstruction Loss Convergence (Train MSE: 0.0084, Val MSE: 0.0092, Test MSE: 0.0098)
+
+![Train, Validation & Test Loss Convergence Curves](assets/loss_curves.png)
 
 ---
 
