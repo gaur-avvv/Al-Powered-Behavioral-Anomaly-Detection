@@ -139,23 +139,23 @@ class AnalystFeedbackRequest(BaseModel):
 
     alert_id: str = Field(...)
     entity_id: str = Field(...)
-    feedback: str = Field(..., example="FP")  # 'TP' or 'FP'
+    feedback: str = Field(..., json_schema_extra={"example": "FP"})  # 'TP' or 'FP'
     notes: Optional[str] = Field(default=None)
 
 
 class TelemetryLogInput(BaseModel):
     """Production Pydantic schema for network behavioral telemetry log ingestion."""
 
-    entity_id: str = Field(..., example="E_1024")
-    entity_type: str = Field(..., example="user")
-    timestamp: str = Field(..., example="2026-07-26T00:15:00Z")
-    source_ip: str = Field(..., example="192.168.1.45")
-    geo_location: Optional[Any] = Field(default="US-East", example="US-East")
-    resource_accessed: str = Field(..., example="/api/v1/admin/purge")
-    auth_method: str = Field(..., example="token")
-    session_duration: float = Field(..., example=120.5)
-    command_sequence: Optional[List[str]] = Field(default=[], example=["sudo su", "rm -rf /var/log"])
-    device_fingerprint: str = Field(..., example="Mozilla/5.0; Linux x86_64; FW_v2.4")
+    entity_id: str = Field(..., json_schema_extra={"example": "E_1024"})
+    entity_type: str = Field(..., json_schema_extra={"example": "user"})
+    timestamp: str = Field(..., json_schema_extra={"example": "2026-07-26T00:15:00Z"})
+    source_ip: str = Field(..., json_schema_extra={"example": "192.168.1.45"})
+    geo_location: Optional[Any] = Field(default="US-East", json_schema_extra={"example": "US-East"})
+    resource_accessed: str = Field(..., json_schema_extra={"example": "/api/v1/admin/purge"})
+    auth_method: str = Field(..., json_schema_extra={"example": "token"})
+    session_duration: float = Field(..., json_schema_extra={"example": 120.5})
+    command_sequence: Optional[List[str]] = Field(default=[], json_schema_extra={"example": ["sudo su", "rm -rf /var/log"]})
+    device_fingerprint: str = Field(..., json_schema_extra={"example": "Mozilla/5.0; Linux x86_64; FW_v2.4"})
 
 
 class SimulationRequest(BaseModel):

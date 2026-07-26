@@ -28,6 +28,8 @@ jobs:
           pip install pytest-cov
 
       - name: Execute Full Pytest Suite (37 Tests)
+        env:
+          PYTHONPATH: .
         run: |
           pytest -v --cov=src --cov-report=term-missing --cov-report=xml
 
