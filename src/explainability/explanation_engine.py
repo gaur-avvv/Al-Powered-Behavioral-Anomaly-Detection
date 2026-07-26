@@ -8,9 +8,17 @@ import numpy as np
 
 DEFAULT_FEATURE_NAMES = [
     "geo_velocity",
-    "new_device",
-    "request_rate",
+    "geo_distance",
     "failed_logins",
+    "previous_login_interval",
+    "new_device",
+    "device_fingerprint_change",
+    "request_rate",
+    "resource_access_frequency",
+    "unusual_resource_access",
+    "session_duration_deviation",
+    "command_sequence_entropy",
+    "auth_method_change",
     "exfil_bytes",
     "admin_calls",
     "port_scans"

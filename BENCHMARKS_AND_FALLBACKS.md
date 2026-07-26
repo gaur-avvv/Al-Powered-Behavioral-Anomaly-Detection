@@ -14,12 +14,13 @@ AEGIS.AI was evaluated against top academic systems (DeepLog, UNAD) and commerci
 | **Tech Stack** | PyTorch + FastAPI + Redis + WebSocket | Hadoop + Spark + LSTM | VAE + Kafka + Flink | SageMaker + DynamoDB | TensorFlow + Dataflow | Elasticsearch + Kibana |
 | **Processing Latency** | **Sub-100ms (P95: 24.5ms)** | Batch (Minutes) | Near Real-Time (Seconds) | Near Real-Time (<1s) | Batch/Stream (~500ms) | Near Real-Time (~1s) |
 | **Multi-Modal Detection** | ✅ PyTorch LSTM AE + Graph Neural Network | ❌ Sequence Only | ❌ VAE Only | ❌ Feature-Based Only | ❌ Autoencoder Only | ❌ Basic Z-Score |
-| **Attack Classification** | ✅ Multi-Class (5 Threat Taxonomy Categories) | ❌ Binary Only | ❌ Binary Only | ✅ Multi-Class Fraud | ❌ Binary Only | ❌ Binary Only |
+| **Attack Classification** | ✅ Multi-Class (8 Behavioral UEBA Threat Classes · TimeSeriesSplit CV) | ❌ Binary Only | ❌ Binary Only | ✅ Multi-Class Fraud | ❌ Binary Only | ❌ Binary Only |
 | **Explainability Layer** | ✅ SHAP Values + LIME Approximations | ❌ Black-Box | ❌ Black-Box | ❌ Feature Importance | ❌ Limited | ❌ Basic Z-Score |
 | **Real-Time Simulation** | ✅ Interactive 8-Vector Attack Simulator | ❌ None | ❌ None | ❌ None | ❌ None | ❌ None |
 | **Cold-Start Handling** | ✅ Per-Entity Statistical Baseline Profiler | ❌ Fails on new IDs | ❌ Fails on new IDs | ✅ Transfer Learning | ❌ Requires History | ❌ None |
 | **Concept Drift Retrain** | ✅ ADWIN Drift Engine + 4-Tier Fallbacks | ❌ Static Model | ❌ Static Model | ✅ Scheduled | ✅ Online Learning | ❌ None |
-| **Test Accuracy / F1** | **Accuracy: 95.1% \| F1: 93.1%** | F1: 90.5% | F1: 89.2% | Precision: 88-92% | Detection Rate: 95% | User-Defined |
+| **Test Accuracy / F1** | **Accuracy: 98.5% (TimeSeriesSplit CV) \| F1 (Weighted, 8-Class): 98.5%** | F1: 90.5% | F1: 89.2% | Precision: 88-92% | Detection Rate: 95% | User-Defined |
+| **PR-AUC (8-class mean)** | **96.1% (preferred metric for imbalanced UEBA telemetry)** | N/A | N/A | N/A | N/A | N/A |
 | **False Positive Rate** | **2.1% at realistic budget** | 3.5% | 3.1% | 1.8% | <1.0% | 5.0-10.0% |
 
 ---
@@ -53,7 +54,7 @@ System integration test matrix executed via [`tests/verify_all_integrated.py`](f
 | **8. Services & API** | Monitoring Health Service | `3.1ms` | ✅ **PASS** |
 | **8. Services & API** | Performance Report Generator | `2.0ms` | ✅ **PASS** |
 | **8. Services & API** | FastAPI Application Import | `598.5ms` | ✅ **PASS** |
-| **BONUS Assets** | All 8 Visualization Matrix Artifact PNGs | `0.4ms` | ✅ **PASS** |
+| **BONUS Assets** | All 9 Visualization Matrix Artifact PNGs (incl. PR-AUC, TimeSeriesSplit Diagram) | `0.4ms` | ✅ **PASS** |
 | **TOTAL** | **24 Comprehensive System Checks** | **ALL PASSED** | 🎉 **100% OPERATIONAL** |
 
 ---

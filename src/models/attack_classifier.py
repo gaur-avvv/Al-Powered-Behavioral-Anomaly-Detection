@@ -1,8 +1,16 @@
 """
 Attack Classifier Module.
-Provides multi-class attack taxonomy classification for detected anomalies,
-mapping synthetic attack vectors directly to explicit threat taxonomy categories,
-and tracking autonomous LLM plugin / agent access anomalies.
+Provides multi-class attack taxonomy classification for 8 behavioral cyber attack vectors
+defined in the UEBA problem statement:
+  1. Brute Force
+  2. Impossible Travel
+  3. Credential Stuffing
+  4. Lateral Movement
+  5. Device Spoofing
+  6. Low-and-Slow Exfiltration
+  7. Insider Drift
+  8. Credential Misuse
+  9. Normal Access Baseline
 """
 
 from typing import Dict, List, Any
@@ -10,18 +18,20 @@ import numpy as np
 
 
 ATTACK_TAXONOMY = [
-    "credential_stuffing",   # Core Auth: Brute Force & Credential Stuffing
-    "data_exfiltration",     # Exfiltration: Low-and-slow & bulk data export
-    "privilege_escalation",  # Escalation: Insider drift & admin tool usage
-    "ddos_flooding",         # Flooding: High-frequency API request bursts
-    "lateral_movement",      # Lateral: Unusual SSH / resource scan paths
-    "llm_agent_anomaly",     # Autonomous LLM plugin & enterprise agent anomaly
-    "normal"                 # Benign baseline
+    "brute_force",
+    "impossible_travel",
+    "credential_stuffing",
+    "lateral_movement",
+    "device_spoofing",
+    "low_and_slow_exfiltration",
+    "insider_drift",
+    "credential_misuse",
+    "normal"
 ]
 
 
 class AttackClassifier:
-    """Classifies anomalous entity behavior into concrete attack categories."""
+    """Classifies anomalous entity behavior into concrete attack categories matching problem statement."""
 
     def __init__(self, model_path: str = "models/lightgbm_classifier.pkl") -> None:
         """
@@ -59,38 +69,46 @@ class AttackClassifier:
 
     def _compute_category_probabilities(self, features: Dict[str, float]) -> List[float]:
         """Private helper mapping feature indicators to normalized Softmax class probabilities."""
-        geo_vel = features.get("geo_velocity", 0.0)
-        new_dev = features.get("new_device", 0.0)
-        req_rate = features.get("request_rate", 0.0)
+        geo_vel = features.get("geo_velocity", features.get("geo_distance", 0.0))
+        dev_change = features.get("device_fingerprint_change", features.get("new_device", 0.0))
+        req_rate = features.get("request_rate", features.get("resource_access_frequency", 0.0))
         failed_logins = features.get("failed_logins", 0.0)
-        session_dur = features.get("session_duration", 0.0)
-        is_llm = features.get("llm_agent_flag", 0.0)
+        session_dur_dev = features.get("session_duration_deviation", features.get("session_duration", 0.0))
+        cmd_entropy = features.get("command_sequence_entropy", 0.0)
+        prev_interval = features.get("previous_login_interval", 0.0)
+        unusual_resource = features.get("unusual_resource_access", 0.0)
 
-        # Explicit mapping of feature signals to threat taxonomy logits
+        # Unnormalized logits mapped to 8 UEBA behavioral attack classes
         logits = [
-            # 1. credential_stuffing (Brute Force & Credential Stuffing)
-            failed_logins * 3.5 + (1.0 if req_rate > 150.0 else 0.0) * 2.0,
+            # 1. brute_force
+            failed_logins * 4.0 + (2.0 if prev_interval < 0.05 else 0.0),
 
-            # 2. data_exfiltration (Low-and-slow & Data Exfiltration)
-            features.get("exfil_bytes", 0.0) * 0.05 + (1.0 if (session_dur > 0 and session_dur < 10.0 and req_rate < 30.0 and failed_logins == 0) else 0.0) * 4.0,
+            # 2. impossible_travel
+            geo_vel * 5.0 + (3.0 if geo_vel > 0.8 else 0.0),
 
-            # 3. privilege_escalation (Insider Drift & Admin Escalation)
-            new_dev * 2.0 + features.get("admin_calls", 0.0) * 3.0 + (1.0 if (session_dur > 40.0 and req_rate > 80.0) else 0.0) * 2.5,
+            # 3. credential_stuffing
+            failed_logins * 2.5 + req_rate * 0.02 + dev_change * 1.5,
 
-            # 4. ddos_flooding (High-Frequency Request Flooding)
-            (req_rate / 50.0) * 2.0,
+            # 4. lateral_movement
+            features.get("port_scans", 0.0) * 3.0 + unusual_resource * 3.5,
 
-            # 5. lateral_movement (Unusual Resource Sequence / Port Scan)
-            features.get("port_scans", 0.0) * 2.0 + (1.0 if (geo_vel > 50.0 and req_rate > 180.0) else 0.0) * 3.0,
+            # 5. device_spoofing
+            dev_change * 5.0 + (2.0 if features.get("auth_method_change", 0.0) > 0 else 0.0),
 
-            # 6. llm_agent_anomaly (Enterprise Agent / LLM Plugin Anomaly Track)
-            is_llm * 5.0 + features.get("prompt_injection_score", 0.0) * 4.0,
+            # 6. low_and_slow_exfiltration
+            features.get("exfil_bytes", 0.0) * 0.05 + (3.0 if (session_dur_dev > 0 and req_rate < 20.0 and failed_logins == 0) else 0.0),
 
-            # 7. normal (Benign baseline)
+            # 7. insider_drift
+            cmd_entropy * 4.0 + features.get("admin_calls", 0.0) * 3.0,
+
+            # 8. credential_misuse
+            (2.5 if prev_interval > 0.9 else 0.0) + unusual_resource * 2.0 + (2.0 if features.get("auth_method_change", 0.0) > 0 else 0.0),
+
+            # 9. normal
             1.0
         ]
 
-        # Softmax normalization: P(Y = k | x) = exp(w_k^T x + b_k) / sum_j exp(w_j^T x + b_j)
+        # Softmax normalization
         exp_logits = np.exp(logits - np.max(logits))
         probabilities = (exp_logits / np.sum(exp_logits)).tolist()
 
