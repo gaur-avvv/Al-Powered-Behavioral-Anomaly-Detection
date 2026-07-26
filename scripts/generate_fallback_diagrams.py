@@ -8,9 +8,10 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-os.makedirs("assets", exist_ok=True)
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+os.makedirs(ASSETS_DIR, exist_ok=True)
 artifact_dir = r"C:\Users\Dell\.gemini\antigravity-ide\brain\143a790d-3565-4607-8509-bc79e619c7b3"
-os.makedirs(artifact_dir, exist_ok=True)
+has_artifact_dir = os.path.exists(artifact_dir)
 
 
 def draw_fallback_architecture():
@@ -74,12 +75,12 @@ def draw_fallback_architecture():
         )
 
     plt.tight_layout()
-    out1 = "assets/tiered_fallback_architecture.png"
-    out1_brain = os.path.join(artifact_dir, "tiered_fallback_architecture.png")
+    out1 = os.path.join(ASSETS_DIR, "tiered_fallback_architecture.png")
     fig.savefig(out1, dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
-    fig.savefig(out1_brain, dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
+    if has_artifact_dir:
+        fig.savefig(os.path.join(artifact_dir, "tiered_fallback_architecture.png"), dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
     plt.close(fig)
-    print(f"Saved {out1} & {out1_brain}")
+    print(f" -> Saved {out1}")
 
 
 def draw_stateful_pipeline():
@@ -128,12 +129,12 @@ def draw_stateful_pipeline():
         )
 
     plt.tight_layout()
-    out2 = "assets/stateful_sequence_pipeline.png"
-    out2_brain = os.path.join(artifact_dir, "stateful_sequence_pipeline.png")
+    out2 = os.path.join(ASSETS_DIR, "stateful_sequence_pipeline.png")
     fig.savefig(out2, dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
-    fig.savefig(out2_brain, dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
+    if has_artifact_dir:
+        fig.savefig(os.path.join(artifact_dir, "stateful_sequence_pipeline.png"), dpi=300, facecolor=fig.get_facecolor(), edgecolor="none")
     plt.close(fig)
-    print(f"Saved {out2} & {out2_brain}")
+    print(f" -> Saved {out2}")
 
 
 if __name__ == "__main__":
