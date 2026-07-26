@@ -29,3 +29,8 @@ htmlcov/
 
 # Antigravity IDE internal files
 .system_generated/
+
+# PowerPoint files
+*.pptx
+*.ppt
+
