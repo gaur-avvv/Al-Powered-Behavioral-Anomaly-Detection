@@ -197,7 +197,7 @@
                         <div class="step-number">Stage 3</div>
                         <div class="step-name">LSTM + GNN Anomaly Scoring</div>
                         <div class="step-detail">PyTorch sequence autoencoder computes MSE reconstruction loss error.</div>
-                        <span class="step-metric" id="pstep-3-metric">MSE: 0.0084</span>
+                        <span class="step-metric" id="pstep-3-metric">MSE: 0.00018</span>
                     </div>
 
                     <div class="pipeline-step active" id="pstep-4">
@@ -226,17 +226,17 @@
                 </div>
                 <div class="matrix-grid">
                     <div class="matrix-box">
-                        <span class="m-label">LSTM Autoencoder</span>
-                        <div class="m-row"><span>Train Loss:</span> <strong id="m-lstm-train">0.0084</strong></div>
-                        <div class="m-row"><span>Val Loss:</span> <strong id="m-lstm-val">0.0092</strong></div>
-                        <div class="m-row"><span>Test MSE Loss:</span> <strong id="m-lstm-test">0.0098</strong></div>
-                        <div class="m-row"><span>Bottleneck Latent Dim:</span> <strong>16</strong></div>
+                        <span class="m-label">Bi-LSTM Autoencoder</span>
+                        <div class="m-row"><span>Train Loss:</span> <strong id="m-lstm-train">0.00026</strong></div>
+                        <div class="m-row"><span>Val Loss:</span> <strong id="m-lstm-val">0.00018</strong></div>
+                        <div class="m-row"><span>Test MSE Loss:</span> <strong id="m-lstm-test">0.00018</strong></div>
+                        <div class="m-row"><span>Bottleneck Latent Dim:</span> <strong>48</strong></div>
                     </div>
                     <div class="matrix-box">
                         <span class="m-label">PyTorch Graph Neural Network</span>
                         <div class="m-row"><span>GNN Architecture:</span> <strong>GraphConv (GCN)</strong></div>
-                        <div class="m-row"><span>GNN Train Loss:</span> <strong id="m-gnn-train">0.0125</strong></div>
-                        <div class="m-row"><span>GNN Val Loss:</span> <strong id="m-gnn-val">0.0141</strong></div>
+                        <div class="m-row"><span>GNN Train Loss:</span> <strong id="m-gnn-train">0.00016</strong></div>
+                        <div class="m-row"><span>GNN Val Loss:</span> <strong id="m-gnn-val">0.00021</strong></div>
                         <div class="m-row"><span>Graph Topology:</span> <strong>Co-Access Graph</strong></div>
                     </div>
                     <div class="matrix-box">

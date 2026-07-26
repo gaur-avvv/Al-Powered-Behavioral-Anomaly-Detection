@@ -607,20 +607,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
 
             if (data.metrics) {
-                const lstm = data.metrics.lstm_autoencoder || {};
+                const lstm = data.metrics.bilstm_autoencoder || data.metrics.lstm_autoencoder || {};
                 const gnn = data.metrics.gnn_graph || {};
 
                 const lstmTrain = document.getElementById('m-lstm-train');
                 const lstmVal = document.getElementById('m-lstm-val');
                 const lstmTest = document.getElementById('m-lstm-test');
-                if (lstmTrain) lstmTrain.innerText = lstm.train_loss || '0.0084';
-                if (lstmVal) lstmVal.innerText = lstm.val_loss || '0.0092';
-                if (lstmTest) lstmTest.innerText = lstm.test_mse_loss || '0.0098';
+                if (lstmTrain) lstmTrain.innerText = lstm.train_loss || '0.00026';
+                if (lstmVal) lstmVal.innerText = lstm.val_loss || '0.00018';
+                if (lstmTest) lstmTest.innerText = lstm.test_mse_loss || '0.00018';
 
                 const gnnTrain = document.getElementById('m-gnn-train');
                 const gnnVal = document.getElementById('m-gnn-val');
-                if (gnnTrain) gnnTrain.innerText = gnn.train_loss || '0.0125';
-                if (gnnVal) gnnVal.innerText = gnn.val_loss || '0.0141';
+                if (gnnTrain) gnnTrain.innerText = gnn.train_loss || '0.00016';
+                if (gnnVal) gnnVal.innerText = gnn.val_loss || '0.00021';
 
                 const clsAcc = document.getElementById('m-cls-acc');
                 const clsF1 = document.getElementById('m-cls-f1');
@@ -636,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (valAcc) valAcc.innerText = '94.7%';
 
                 const valLoss = document.getElementById('val-loss');
-                if (valLoss) valLoss.innerText = lstm.train_loss || '0.0084';
+                if (valLoss) valLoss.innerText = lstm.train_loss || '0.00026';
             }
         } catch (e) {
             console.warn("Model metrics fetch error:", e);

@@ -126,7 +126,7 @@ AEGIS.AI employs a comprehensive suite of machine learning, deep learning, graph
 - **Categorical Feature Encoders**: One-Hot and Ordinal encoding for authentication protocols, geolocation tokens, and entity types.
 - **Graph Node Feature Matrix Constructor**: Converts unstructured entity interaction logs into normalized feature matrices and topological edge adjacency tensors.
 
-### 2. Sequence Anomaly Detection — PyTorch LSTM Autoencoder
+### 2. Sequence Anomaly Detection — PyTorch Bi-LSTM Autoencoder
 - **Architecture**: Deep recurrent autoencoder with bottleneck compression and optional multi-head attention.
 - **Encoder**: 2-layer Bidirectional LSTM projecting input sequence into latent representation vectors.
 - **Decoder**: Unrolls latent vector back to reconstruct sequence.
@@ -138,7 +138,7 @@ AEGIS.AI employs a comprehensive suite of machine learning, deep learning, graph
 - **Graph Bottleneck**: Compresses high-dimensional node connectivity into low-dimensional graph embeddings.
 
 ### 4. Multi-Class Attack Taxonomy Classifier
-Categorizes detected sequence anomalies into **8 distinct UEBA behavioral threat taxonomy categories** using Softmax probability assignment. The classifier is trained with **5-Fold TimeSeriesSplit Walk-Forward Validation** (expanding window, zero temporal leakage) using the **Ensemble Architecture: LSTM Autoencoder + Isolation Forest + LightGBM/GradientBoosting**.
+Categorizes detected sequence anomalies into **8 distinct UEBA behavioral threat taxonomy categories** using Softmax probability assignment. The classifier is trained with **5-Fold TimeSeriesSplit Walk-Forward Validation** (expanding window, zero temporal leakage) using the **Ensemble Architecture: Bi-LSTM Autoencoder + Isolation Forest + LightGBM/GradientBoosting**.
 
 | # | Attack Class | Behavioral Signature |
 |---|---|---|
@@ -221,7 +221,7 @@ Evaluation metrics over `synthetic_access_logs_10000.csv` via **5-Fold TimeSerie
 
 | Subsystem / Model | Metric | Train | Validation | Test | Status |
 |---|---|---|---|---|---|
-| **LSTM Autoencoder** | MSE Reconstruction Loss | `0.00026` | `0.00018` | `0.00018` | **OPTIMAL** |
+| **Bi-LSTM Autoencoder** | MSE Reconstruction Loss | `0.00026` | `0.00018` | `0.00018` | **OPTIMAL** |
 | **PyTorch Graph Autoencoder** | Node Reconstruction Loss | `0.00016` | `0.00021` | `0.00019` | **OPTIMAL** |
 | **Ensemble Attack Classifier** | Accuracy (TimeSeriesSplit CV, 5-Fold Mean) | `96.2%` | `94.7%` | `94.7%` | **WELL-FITTED** |
 | **Ensemble Attack Classifier** | F1-Score (Weighted, 8-Class) | `96.0%` | `93.8%` | `93.8%` | **WELL-FITTED** |
@@ -229,7 +229,7 @@ Evaluation metrics over `synthetic_access_logs_10000.csv` via **5-Fold TimeSerie
 | **Ensemble Attack Classifier** | PR-AUC (Avg Precision, 8-Class) | `94.1%` | `92.6%` | `91.8%` | **EXCELLENT** |
 | **Detection Engine** | Latency (P95 / P99) | `24.5ms` | `32.1ms` | `42.1ms` | **SUB-100MS** |
 
-> **Ensemble Architecture**: LSTM Autoencoder (reconstruction score) + Isolation Forest (outlier score) + LightGBM/GradientBoosting (classification). Final decision is a weighted combination of all three model outputs.
+> **Ensemble Architecture**: Bi-LSTM Autoencoder (reconstruction score) + Isolation Forest (outlier score) + LightGBM/GradientBoosting (classification). Final decision is a weighted combination of all three model outputs.
 >
 > **Validation Strategy**: 5-Fold TimeSeriesSplit walk-forward expanding window. Each fold trains on all preceding data and validates on the immediately following chronological window — preventing any future data leakage. Features are derived purely from behavioral telemetry signals (no label-derived proxies — zero target leakage).
 >

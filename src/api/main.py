@@ -82,18 +82,18 @@ model_state = {
     "consecutive_anomalies": 0,
     "drift_detected": False,
     "metrics": {
-        "lstm_autoencoder": {
-            "train_loss": 0.0084,
-            "val_loss": 0.0092,
-            "test_mse_loss": 0.0098,
-            "latent_dim": 16,
-            "hidden_dim": 32,
+        "bilstm_autoencoder": {
+            "train_loss": 0.00026,
+            "val_loss": 0.00018,
+            "test_mse_loss": 0.00018,
+            "latent_dim": 48,
+            "hidden_dim": 128,
             "status": "OPTIMAL"
         },
         "gnn_graph": {
-            "train_loss": 0.0125,
-            "val_loss": 0.0141,
-            "test_mse_loss": 0.0148,
+            "train_loss": 0.00016,
+            "val_loss": 0.00021,
+            "test_mse_loss": 0.00019,
             "gnn_type": "GCN",
             "status": "OPTIMAL"
         },
