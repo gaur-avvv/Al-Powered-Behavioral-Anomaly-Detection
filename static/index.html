@@ -346,27 +346,75 @@
                 </div>
             </div>
 
+            <!-- Threat Distribution & Top Targeted Entities Section -->
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+                <!-- Threat Distribution Breakdown -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3>Threat Taxonomy Distribution</h3>
+                        <span class="panel-subtitle">Relative proportion of detected attack vectors across active telemetry</span>
+                    </div>
+                    <div class="shap-container" id="distribution-bars">
+                        <!-- Dynamic distribution bars -->
+                    </div>
+                </div>
+
+                <!-- Top Targeted Entities Profile Summary -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3>Top-Targeted Entity Watchlist</h3>
+                        <span class="panel-subtitle">Entities with highest cumulative anomaly risk scores</span>
+                    </div>
+                    <div id="top-entities-list" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Dynamic top targeted entities list -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Live Alert Queue & Simulator Grid -->
             <div class="dashboard-grid bottom-grid">
-                <!-- Priority Ranked Alert Feed -->
+                <!-- Priority Ranked & Filterable Alert Feed -->
                 <div class="glass-panel alerts-panel" id="alerts">
                     <div class="panel-header-row">
                         <div>
-                            <h3>Priority Risk-Ranked Alert Feed</h3>
-                            <span class="panel-subtitle">Real-time threat queue ranked by composite risk score</span>
+                            <h3>Priority Risk-Ranked Threat Feed</h3>
+                            <span class="panel-subtitle">Filterable &amp; sortable operational alert queue</span>
                         </div>
                         <span class="badge badge-purple" id="alert-count-badge">3 Active</span>
                     </div>
+
+                    <!-- Filter Controls Bar -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                        <input type="text" id="alert-search" placeholder="Search Entity ID or Alert ID..." style="flex: 1; min-width: 160px; padding: 7px 10px; font-size: 0.78rem;">
+                        <select id="filter-category" style="width: auto; min-width: 140px; padding: 7px 10px; font-size: 0.78rem;">
+                            <option value="ALL">All Categories</option>
+                            <option value="brute_force">Brute Force</option>
+                            <option value="impossible_travel">Impossible Travel</option>
+                            <option value="credential_stuffing">Credential Stuffing</option>
+                            <option value="lateral_movement">Lateral Movement</option>
+                            <option value="device_spoofing">Device Spoofing</option>
+                            <option value="low_and_slow_exfiltration">Low &amp; Slow Exfil</option>
+                            <option value="insider_drift">Insider Drift</option>
+                            <option value="credential_misuse">Credential Misuse</option>
+                        </select>
+                        <select id="filter-severity" style="width: auto; min-width: 120px; padding: 7px 10px; font-size: 0.78rem;">
+                            <option value="ALL">All Risk Levels</option>
+                            <option value="HIGH">High Risk (&gt;0.70)</option>
+                            <option value="MED">Med Risk (0.40-0.70)</option>
+                            <option value="LOW">Low Risk (&lt;0.40)</option>
+                        </select>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="alert-table">
                             <thead>
                                 <tr>
-                                    <th>Alert ID</th>
-                                    <th>Entity</th>
-                                    <th>Risk Score</th>
-                                    <th>Threat Category</th>
+                                    <th style="cursor: pointer;" class="sort-header" data-sort="id">Alert ID ↕</th>
+                                    <th style="cursor: pointer;" class="sort-header" data-sort="entity_id">Entity ↕</th>
+                                    <th style="cursor: pointer;" class="sort-header" data-sort="score">Risk Score ↕</th>
+                                    <th style="cursor: pointer;" class="sort-header" data-sort="category">Category ↕</th>
                                     <th>Confidence</th>
-                                    <th>Timestamp</th>
+                                    <th style="cursor: pointer;" class="sort-header" data-sort="timestamp">Timestamp ↕</th>
                                 </tr>
                             </thead>
                             <tbody id="alert-table-body">
@@ -375,57 +423,90 @@
                         </table>
                     </div>
                     <div class="alert-hint">
-                        Select any alert row to view detailed diagnostic attributions, feature scores, and routing decision trace.
+                        Select any alert row to open Entity Profile Card, SHAP attributions, 5-stage trace, &amp; Analyst Feedback (TP/FP).
                     </div>
                 </div>
 
-                <!-- Interactive Cyber Attack Simulator Form -->
-                <div class="glass-panel simulator-panel" id="simulator">
-                    <div class="panel-header">
-                        <h3>Real-Time Attack Vector Simulator</h3>
-                        <span class="panel-subtitle">Inject synthetic telemetry patterns into detection engine</span>
+                <!-- Cyber Attack Simulator & Telemetry Injection Controls -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Attack Vector Simulator -->
+                    <div class="glass-panel simulator-panel" id="simulator">
+                        <div class="panel-header">
+                            <h3>Real-Time Attack Vector Simulator</h3>
+                            <span class="panel-subtitle">Inject synthetic telemetry patterns into detection engine</span>
+                        </div>
+                        <form id="sim-form" class="sim-form">
+                            <div class="form-group">
+                                <label for="sim-attack-type">Attack Vector</label>
+                                <select id="sim-attack-type" class="select-input">
+                                    <option value="brute_force">Brute Force (Rapid Failed Auths)</option>
+                                    <option value="impossible_travel">Impossible Travel (High Geo Velocity)</option>
+                                    <option value="credential_stuffing">Credential Stuffing (High Vol &amp; Fails)</option>
+                                    <option value="lateral_movement">Lateral Movement (Unusual Scope)</option>
+                                    <option value="device_spoofing">Device Spoofing (Fingerprint Mismatch)</option>
+                                    <option value="low_and_slow_exfiltration">Low &amp; Slow Exfiltration (Off-hours Small Downloads)</option>
+                                    <option value="insider_drift">Insider Drift (Expanding Scope)</option>
+                                    <option value="credential_misuse">Credential Misuse (Suspicious Context Logins)</option>
+                                </select>
+                            </div>
+                            <div class="attack-desc" id="sim-attack-desc">
+                                Rapid consecutive failed authentication attempts from a single source entity.
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sim-entity">Target Entity ID</label>
+                                    <input type="text" id="sim-entity" value="" placeholder="Auto-generated ID">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sim-intensity">Signal Intensity Multiplier</label>
+                                    <input type="number" id="sim-intensity" value="1.5" min="0.5" max="5.0" step="0.5">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sim-ip">Simulated Source IP</label>
+                                    <input type="text" id="sim-ip" value="198.51.100.45">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sim-geo">Origin Geo Location</label>
+                                    <input type="text" id="sim-geo" value="US (N. Virginia)">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-accent btn-full">
+                                <span>Execute Simulation &amp; Inference</span>
+                            </button>
+                        </form>
                     </div>
-                    <form id="sim-form" class="sim-form">
-                        <div class="form-group">
-                            <label for="sim-attack-type">Attack Vector</label>
-                            <select id="sim-attack-type" class="select-input">
-                                <option value="brute_force">Brute Force (Rapid Failed Auths)</option>
-                                <option value="impossible_travel">Impossible Travel (High Geo Velocity)</option>
-                                <option value="credential_stuffing">Credential Stuffing (High Vol &amp; Fails)</option>
-                                <option value="lateral_movement">Lateral Movement (Unusual Scope)</option>
-                                <option value="device_spoofing">Device Spoofing (Fingerprint Mismatch)</option>
-                                <option value="low_and_slow_exfiltration">Low &amp; Slow Exfiltration (Off-hours Small Downloads)</option>
-                                <option value="insider_drift">Insider Drift (Expanding Scope)</option>
-                                <option value="credential_misuse">Credential Misuse (Suspicious Context Logins)</option>
-                            </select>
-                        </div>
-                        <div class="attack-desc" id="sim-attack-desc">
-                            Rapid consecutive failed authentication attempts from a single source entity.
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="sim-entity">Target Entity ID</label>
-                                <input type="text" id="sim-entity" value="" placeholder="Auto-generated ID">
+
+                    <!-- Automated Telemetry Injection Console (Faker Stream Loop) -->
+                    <div class="glass-panel">
+                        <div class="panel-header-row">
+                            <div>
+                                <h3>Telemetry Ingestion Console</h3>
+                                <span class="panel-subtitle">Automated Faker streaming ingestion loop</span>
                             </div>
-                            <div class="form-group">
-                                <label for="sim-intensity">Signal Intensity Multiplier</label>
-                                <input type="number" id="sim-intensity" value="1.5" min="0.5" max="5.0" step="0.5">
-                            </div>
+                            <button id="toggle-stream-btn" class="btn btn-primary btn-sm">
+                                <span>Start Stream Loop</span>
+                            </button>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="sim-ip">Simulated Source IP</label>
-                                <input type="text" id="sim-ip" value="198.51.100.45">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
+                            <div class="diag-cell">
+                                <div class="diag-label">Sent</div>
+                                <div class="diag-value" id="counter-sent">0</div>
                             </div>
-                            <div class="form-group">
-                                <label for="sim-geo">Origin Geo Location</label>
-                                <input type="text" id="sim-geo" value="US (N. Virginia)">
+                            <div class="diag-cell">
+                                <div class="diag-label">Accepted (202)</div>
+                                <div class="diag-value text-green" id="counter-success">0</div>
+                            </div>
+                            <div class="diag-cell">
+                                <div class="diag-label">Errors</div>
+                                <div class="diag-value text-red" id="counter-failed">0</div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-accent btn-full">
-                            <span>Execute Simulation &amp; Inference</span>
-                        </button>
-                    </form>
+                        <div id="terminal-feed" style="background: rgba(4, 6, 14, 0.9); border: 1px solid var(--border-card); border-radius: 6px; padding: 8px 10px; height: 100px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">
+                            <div>System ready. Click "Start Stream Loop" to stream live Faker payloads.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
