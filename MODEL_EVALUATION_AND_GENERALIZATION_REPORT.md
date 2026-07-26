@@ -1,12 +1,12 @@
-# 🛡️ AEGIS.AI — Model Generalization, Overfitting Prevention & Real-World Evaluation Report
+# 🛡️ AEGIS.AI — Model Generalization, Regularization & Synthetic Evaluation Report
 
-This report provides a formal technical breakdown of how **AEGIS.AI** ensures **zero overfitting**, robust generalizability to real-world enterprise access telemetry, and strict empirical rigor across all evaluation matrices.
+This report provides a formal technical breakdown of how **AEGIS.AI** incorporates multiple regularization and validation mechanisms designed to minimize overfitting, improve generalizability to enterprise access telemetry, and ensure strict empirical rigor across all evaluation matrices.
 
 ---
 
-## 🏛️ 1. Why AEGIS.AI Models Do NOT Overfit
+## 🏛️ 1. Overfitting Prevention & Generalization Mechanisms
 
-Overfitting in cybersecurity anomaly detection models occurs when a network memorizes synthetic artifacts or label leakage features rather than learning genuine behavioral patterns. AEGIS.AI prevents overfitting through **five enterprise-grade architectural safeguards**:
+Overfitting in cybersecurity anomaly detection models occurs when a network memorizes synthetic artifacts or label leakage features rather than learning genuine behavioral patterns. AEGIS.AI minimizes overfitting through **five enterprise-grade architectural safeguards**:
 
 ```
                                 [ Structured Input Telemetry Stream ]
@@ -71,11 +71,13 @@ AEGIS.AI bridges the gap between simulated benchmarks and production SIEM log st
 ### Explainable Multi-Model Risk Score Formulation
 $$\text{Risk Score} = 0.40 \times S_{\text{Bi-LSTM}} + 0.25 \times S_{\text{GNN}} + 0.15 \times S_{\text{IsolationForest}} + 0.20 \times P_{\text{GBM}}(\text{Attack})$$
 
+*Weights were chosen empirically during validation to balance sequential behavior modeling (40%), graph-structured context (25%), unsupervised spatial anomaly detection (15%), and supervised attack classification (20%).*
+
 ---
 
 ## 📊 3. Metric Justification & Performance Matrix
 
-All evaluation numbers reflect **empirical execution** on 10,000 real-time telemetry records evaluated under **5-Fold TimeSeriesSplit Cross-Validation**:
+All evaluation numbers were **evaluated on a synthetic behavioral access log dataset designed to emulate enterprise telemetry** (10,000 records) under **5-Fold TimeSeriesSplit Cross-Validation**:
 
 | Subsystem / Model | Metric | Train | Validation | Test | Status |
 |---|---|---|---|---|---|

@@ -115,11 +115,39 @@ graph TD
     Redis --> WS
 ```
 
+### End-to-End Execution & Detection Flow
+
+```mermaid
+flowchart TD
+    A["Raw Access Telemetry Logs"] --> B["Feature Vectorizer & L1 Feature Selection"]
+    B --> C["5-Fold TimeSeriesSplit Walk-Forward Split"]
+    
+    subgraph Multi_Model_Ensemble["Multi-Model Detection Ensemble"]
+        D1["Bi-LSTM Sequence Autoencoder<br/>(Sequential Reconstruction MSE)"]
+        D2["PyTorch GNN Autoencoder<br/>(Node Topology Graph Loss)"]
+        D3["Isolation Forest<br/>(Spatial Density Outlier)"]
+        D4["GradientBoosting Classifier<br/>(8-Class Threat Taxonomy)"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> D4
+
+    D1 --> E["Weighted Risk Score Fusion Engine<br/>0.40(Bi-LSTM) + 0.25(GNN) + 0.15(IF) + 0.20(GBM)"]
+    D2 --> E
+    D3 --> E
+    D4 --> E
+
+    E --> F["SHAP & Integrated Gradients Explainability Layer"]
+    F --> G["Analyst Dashboard UI & Real-Time WebSockets Stream"]
+```
+
 ---
 
 ## 🧬 Machine Learning & Deep Learning Taxonomy
 
-AEGIS.AI employs a comprehensive suite of machine learning, deep learning, graph modeling, and statistical algorithms:
+AEGIS.AI incorporates multiple regularization and validation mechanisms designed to minimize overfitting and improve generalizability:
 
 ### 1. Data Encoders & Preprocessing Layer
 - **StandardScaler**: Z-score feature normalization preserving variance structure across numerical telemetry.
@@ -165,7 +193,7 @@ AEGIS.AI synthesizes output scores across sequence, structural, spatial, and cla
 
 $$\text{Risk Score} = 0.40 \times S_{\text{Bi-LSTM}} + 0.25 \times S_{\text{GNN}} + 0.15 \times S_{\text{IsolationForest}} + 0.20 \times P_{\text{GBM}}(\text{Attack})$$
 
-Where \(S_{\text{Bi-LSTM}}\) and \(S_{\text{GNN}}\) represent P99-normalized reconstruction MSE losses, \(S_{\text{IsolationForest}}\) represents spatial tree density deviation, and \(P_{\text{GBM}}(\text{Attack})\) is the multi-class attack probability.
+*Weights were chosen empirically during validation to balance sequential behavior modeling (40%), graph-structured context (25%), unsupervised spatial anomaly detection (15%), and supervised attack classification (20%).*
 
 | Risk Level | Score Range | Operational SOC Action |
 |---|---|---|
