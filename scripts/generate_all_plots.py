@@ -175,13 +175,8 @@ if "geo_location" in df.columns:
     )
     feature_cols.append("geo_location_change")
 
-# --- failed_logins proxy: label-based numeric indicator ---
-df["is_brute_force"]  = (df["label"] == "brute_force").astype(float)
-df["is_cred_stuff"]   = (df["label"] == "credential_stuffing").astype(float)
-df["is_anomaly"]      = (df["label"] != "normal").astype(float)
-feature_cols += ["is_brute_force", "is_cred_stuff", "is_anomaly"]
-
-
+# NOTE: No label-derived features allowed — that would be target leakage.
+# All features must be computed purely from behavioral telemetry signals.
 
 feature_cols = list(dict.fromkeys(feature_cols))  # deduplicate preserving order
 feature_cols = [c for c in feature_cols if c in df.columns]

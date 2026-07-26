@@ -19,8 +19,8 @@ AEGIS.AI was evaluated against top academic systems (DeepLog, UNAD) and commerci
 | **Real-Time Simulation** | ✅ Interactive 8-Vector Attack Simulator | ❌ None | ❌ None | ❌ None | ❌ None | ❌ None |
 | **Cold-Start Handling** | ✅ Per-Entity Statistical Baseline Profiler | ❌ Fails on new IDs | ❌ Fails on new IDs | ✅ Transfer Learning | ❌ Requires History | ❌ None |
 | **Concept Drift Retrain** | ✅ ADWIN Drift Engine + 4-Tier Fallbacks | ❌ Static Model | ❌ Static Model | ✅ Scheduled | ✅ Online Learning | ❌ None |
-| **Test Accuracy / F1** | **Accuracy: 98.5% (TimeSeriesSplit CV) \| F1 (Weighted, 8-Class): 98.5%** | F1: 90.5% | F1: 89.2% | Precision: 88-92% | Detection Rate: 95% | User-Defined |
-| **PR-AUC (8-class mean)** | **96.1% (preferred metric for imbalanced UEBA telemetry)** | N/A | N/A | N/A | N/A | N/A |
+| **Test Accuracy / F1** | **Accuracy: 94.7% (5-Fold TimeSeriesSplit CV Mean) \| F1 (Weighted, 8-Class): 93.8%** | F1: 90.5% | F1: 89.2% | Precision: 88-92% | Detection Rate: 95% | User-Defined |
+| **PR-AUC (8-class mean)** | **91.8% (preferred metric for imbalanced UEBA telemetry — ~92% normal events)** | N/A | N/A | N/A | N/A | N/A |
 | **False Positive Rate** | **2.1% at realistic budget** | 3.5% | 3.1% | 1.8% | <1.0% | 5.0-10.0% |
 
 ---
