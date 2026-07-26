@@ -1,3 +1,3 @@
 """
-Root test package for Anomaly Detection system.
+AEGIS.AI Automated Verification & Pytest Test Suite Package.
 """

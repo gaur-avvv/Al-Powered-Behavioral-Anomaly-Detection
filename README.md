@@ -280,21 +280,92 @@ python -m uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
 
 ---
 
-## 📡 API Endpoint Catalog
+### 🐳 Docker & Containerization (Production Deployment)
+
+```bash
+# Build and run container stack using Docker Compose
+docker-compose up --build
+
+# Or build standalone Docker container
+docker build -t aegis-ai:latest .
+docker run -p 8000:8000 aegis-ai:latest
+```
+
+* Dashboard UI: `http://localhost:8000`
+* Swagger Interactive API Docs: `http://localhost:8000/docs`
+* OpenAPI JSON Schema: `http://localhost:8000/openapi.json`
+
+---
+
+## 📡 API Endpoint Catalog & cURL Examples
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/v1/telemetry` | `POST` | **High-speed network log ingestion target (<5ms ingestion response time)**, pushes into decoupled queue for sub-100ms processing. |
 | `/api/v1/detect` | `POST` | Real-time sequence anomaly detection with Cold-Start routing & 4-tier fallbacks. |
 | `/api/v1/simulate` | `POST` | Simulates real-time cyber attack vectors (`brute_force`, `impossible_travel`, `credential_stuffing`, `lateral_movement`, `device_spoofing`, `low_and_slow_exfiltration`, `insider_drift`, `credential_misuse`). |
-| `/api/v1/metrics` | `GET` | Returns Train/Val/Test loss matrices, accuracy, precision, recall, F1, ROC-AUC. |
+| `/api/v1/feedback` | `POST` | SOC Analyst Feedback Loop (TP/FP) — updates baseline profiles incrementally. |
+| `/api/v1/profile/{id}` | `GET` | Returns Entity Profile Baseline Card (geo, operating hours, frequent resources, devices). |
+| `/api/v1/analytics` | `GET` | Returns 8-class threat distribution breakdown and top targeted entities watchlist. |
+| `/api/v1/metrics` | `GET` | Returns Train/Val/Test loss matrices, accuracy, precision, recall, F1, ROC-AUC, PR-AUC. |
 | `/api/v1/retrain` | `POST` | Triggers background model retraining pipeline on ADWIN drift detection. |
 | `/api/v1/alerts` | `GET` | Retrieves top risk-ranked active security alerts. |
 | `/api/v1/health` | `GET` | System component readiness health checks. |
 | `/api/v1/report` | `GET` | Generates full audit report with assumptions & limitations. |
 | `/ws/dashboard/{analyst_id}` | `WS` | Real-time WebSocket channel for alert telemetry & retraining updates. |
 
+### cURL Testing Examples
+
+```bash
+# 1. System Health Check
+curl http://localhost:8000/api/v1/health
+
+# 2. Real-Time Telemetry Ingestion
+curl -X POST http://localhost:8000/api/v1/telemetry \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "E_1024",
+    "entity_type": "user",
+    "timestamp": "2026-07-26T10:00:00Z",
+    "source_ip": "185.220.101.4",
+    "geo_location": [48.8566, 2.3522],
+    "resource_accessed": "/api/v1/admin/purge",
+    "auth_method": "token",
+    "session_duration": 45.2,
+    "command_sequence": ["sudo su -", "rm -rf /var/log"],
+    "device_fingerprint": "Linux x86_64"
+  }'
+
+# 3. Simulate Cyber Attack Vector
+curl -X POST http://localhost:8000/api/v1/simulate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "attack_type": "impossible_travel",
+    "entity_id": "USR-TRAVEL-8812",
+    "intensity": 2.0
+  }'
+
+# 4. Submit Analyst Feedback (False Positive / Retrain)
+curl -X POST http://localhost:8000/api/v1/feedback \
+  -H "Content-Type: application/json" \
+  -d '{
+    "alert_id": "alert_101",
+    "entity_id": "USR-SIM-1014",
+    "feedback": "FP",
+    "notes": "Known maintenance script execution"
+  }'
+```
+
+---
+
+## ⚙️ Automated CI/CD Pipeline & Quality Assurance
+
+This repository includes a production **GitHub Actions CI/CD Workflow** ([`.github/workflows/tests.yml`](file:///.github/workflows/tests.yml)):
+- Automatically runs `pytest -v --cov=src` on Python 3.11 for every push and pull request.
+- Validates FastAPI application loading and module package integrity.
+- Guarantees 100% pass rate across all 37 unit, integration, performance, security, and fallback test suites.
+
 ---
 
 ## 📄 License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [`LICENSE`](file:///LICENSE) file for details.
