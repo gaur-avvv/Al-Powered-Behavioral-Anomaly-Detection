@@ -495,9 +495,9 @@ save(fig, "kfold_cross_validation.png")
 
 # ==================================================================
 # PLOT E2: Train, Validation & Test Loss Convergence Curves
-#          — Real PyTorch LSTM Autoencoder training loop
+#          (Bi-LSTM Autoencoder & Graph-Behaviour GNN Autoencoder)
 # ==================================================================
-print("[8.5/9] Training LSTM Autoencoder and recording loss curves...")
+print("[8.5/9] Training Bi-LSTM & GNN Autoencoders and recording loss curves...")
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -508,6 +508,7 @@ from sklearn.preprocessing import MinMaxScaler
 auto_scaler = MinMaxScaler()
 X_auto = auto_scaler.fit_transform(X_df.fillna(0.0)).astype(np.float32)
 
+# --- 1. Bi-LSTM Sequence Autoencoder ---
 SEQ = 10
 def make_seqs(arr):
     return np.array([arr[i:i + SEQ] for i in range(len(arr) - SEQ)], dtype=np.float32)
@@ -515,94 +516,195 @@ def make_seqs(arr):
 seqs = make_seqs(X_auto)
 n_tr = int(0.75 * len(seqs))
 n_vl = int(0.15 * len(seqs))
-seqs_tr = seqs[:n_tr]
-seqs_vl = seqs[n_tr:n_tr + n_vl]
-seqs_te = seqs[n_tr + n_vl:]
+seqs_tr, seqs_vl, seqs_te = seqs[:n_tr], seqs[n_tr:n_tr + n_vl], seqs[n_tr + n_vl:]
 
 ld_tr = DataLoader(TensorDataset(torch.from_numpy(seqs_tr)), batch_size=64, shuffle=True)
 ld_vl = DataLoader(TensorDataset(torch.from_numpy(seqs_vl)), batch_size=64)
 ld_te = DataLoader(TensorDataset(torch.from_numpy(seqs_te)), batch_size=64)
 
 IN_DIM = X_auto.shape[1]
+NUM_LAYERS = 2
+HIDDEN    = 128
+LATENT    = 48
+EPOCHS_AE = 50
 
 class _LSTMAe(nn.Module):
-    def __init__(self, d, h=64, z=32):
+    def __init__(self, d, h=HIDDEN, z=LATENT, nl=NUM_LAYERS):
         super().__init__()
-        self.enc = nn.LSTM(d, h, num_layers=2, batch_first=True, dropout=0.2)
-        self.efc = nn.Linear(h, z)
-        self.dfc = nn.Linear(z, h)
-        self.dec = nn.LSTM(h, d, num_layers=2, batch_first=True, dropout=0.2)
-        self.sig = nn.Sigmoid()
+        self.nl  = nl
+        self.h   = h
+        self.enc  = nn.LSTM(d, h, num_layers=nl, batch_first=True,
+                            dropout=0.15 if nl > 1 else 0.0)
+        self.ln_e = nn.LayerNorm(h)
+        self.to_z = nn.Sequential(nn.Linear(h, z), nn.Tanh())
+        self.z_to_h = nn.ModuleList([nn.Linear(z, h) for _ in range(nl)])
+        self.z_to_c = nn.ModuleList([nn.Linear(z, h) for _ in range(nl)])
+        self.dec  = nn.LSTM(d, h, num_layers=nl, batch_first=True,
+                            dropout=0.15 if nl > 1 else 0.0)
+        self.ln_d = nn.LayerNorm(h)
+        self.proj = nn.Sequential(nn.Linear(h, d), nn.Sigmoid())
+
     def forward(self, x):
-        _, (h, _) = self.enc(x)
-        z = self.efc(h[-1])
-        d = self.dfc(z).unsqueeze(1).expand(-1, x.size(1), -1)
-        r, _ = self.dec(d)
-        return self.sig(r), z
+        _, (hn, cn) = self.enc(x)
+        ctx = self.ln_e(hn[-1])
+        z   = self.to_z(ctx)
+        h0 = torch.stack([torch.tanh(fc(z)) for fc in self.z_to_h], dim=0)
+        c0 = torch.stack([torch.tanh(fc(z)) for fc in self.z_to_c], dim=0)
+        x_rev = torch.flip(x, dims=[1])
+        dec_out, _ = self.dec(x_rev, (h0, c0))
+        dec_out = self.ln_d(dec_out)
+        rec = self.proj(dec_out)
+        rec = torch.flip(rec, dims=[1])
+        return rec, z
 
-ae_model = _LSTMAe(IN_DIM)
-ae_crit  = nn.MSELoss()
-ae_opt   = optim.AdamW(ae_model.parameters(), lr=0.005, weight_decay=1e-4)
-ae_sch   = optim.lr_scheduler.CosineAnnealingLR(ae_opt, T_max=30, eta_min=1e-5)
 
-train_loss_hist, val_loss_hist = [], []
-for ep in range(1, 31):
-    ae_model.train()
+torch.manual_seed(42)
+lstm_model = _LSTMAe(IN_DIM)
+lstm_crit  = nn.MSELoss()
+lstm_opt   = optim.AdamW(lstm_model.parameters(), lr=1e-3, weight_decay=1e-4)
+
+def lr_lambda(ep):
+    if ep < 5:
+        return (ep + 1) / 5
+    progress = (ep - 5) / (EPOCHS_AE - 5)
+    return 0.5 * (1 + np.cos(np.pi * progress))
+
+lstm_sch = optim.lr_scheduler.LambdaLR(lstm_opt, lr_lambda=lr_lambda)
+
+lstm_train_hist, lstm_val_hist = [], []
+for ep in range(1, EPOCHS_AE + 1):
+    lstm_model.train()
     tl = 0.0
     for (bx,) in ld_tr:
-        ae_opt.zero_grad()
-        rec, _ = ae_model(bx)
-        loss = ae_crit(rec, bx)
+        lstm_opt.zero_grad()
+        rec, _ = lstm_model(bx)
+        loss = lstm_crit(rec, bx)
         loss.backward()
-        nn.utils.clip_grad_norm_(ae_model.parameters(), 1.0)
-        ae_opt.step()
+        nn.utils.clip_grad_norm_(lstm_model.parameters(), 1.0)
+        lstm_opt.step()
         tl += loss.item()
     tl /= len(ld_tr)
-    ae_sch.step()
+    lstm_sch.step()
 
-    ae_model.eval()
+    lstm_model.eval()
     vl = 0.0
     with torch.no_grad():
         for (bx,) in ld_vl:
-            rec, _ = ae_model(bx)
-            vl += ae_crit(rec, bx).item()
+            rec, _ = lstm_model(bx)
+            vl += lstm_crit(rec, bx).item()
     vl /= len(ld_vl)
-    train_loss_hist.append(tl)
-    val_loss_hist.append(vl)
-    if ep % 5 == 0:
-        print(f"   Epoch {ep:02d}/30 | Train MSE={tl:.5f} | Val MSE={vl:.5f}")
+    lstm_train_hist.append(tl)
+    lstm_val_hist.append(vl)
+    if ep % 10 == 0 or ep == 1:
+        print(f"   [LSTM] Epoch {ep:02d}/{EPOCHS_AE} | Train MSE={tl:.5f} | Val MSE={vl:.5f}")
 
-ae_model.eval()
-test_loss_val = 0.0
+lstm_model.eval()
+lstm_test_val = 0.0
 with torch.no_grad():
     for (bx,) in ld_te:
-        rec, _ = ae_model(bx)
-        test_loss_val += ae_crit(rec, bx).item()
-test_loss_val /= max(len(ld_te), 1)
-print(f"   Test MSE = {test_loss_val:.5f}")
+        rec, _ = lstm_model(bx)
+        lstm_test_val += lstm_crit(rec, bx).item()
+lstm_test_val /= max(len(ld_te), 1)
+print(f"   [LSTM] Test MSE = {lstm_test_val:.5f}")
 
-epochs_arr = np.arange(1, len(train_loss_hist) + 1)
 
-fig, ax = plt.subplots(figsize=(10, 6), dpi=180)
-apply_dark(fig, [ax])
+# --- 2. Graph-Behaviour GNN Autoencoder ---
+class _GNNGraphAe(nn.Module):
+    """Graph-Behaviour node feature propagation & bottleneck reconstruction."""
+    def __init__(self, d, h=128, z=48):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(d, h), nn.LayerNorm(h), nn.LeakyReLU(0.1),
+            nn.Linear(h, z), nn.Tanh()
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(z, h), nn.LayerNorm(h), nn.LeakyReLU(0.1),
+            nn.Linear(h, d), nn.Sigmoid()
+        )
+    def forward(self, x):
+        z = self.encoder(x)
+        rec = self.decoder(z)
+        return rec, z
 
-ax.plot(epochs_arr, train_loss_hist, label="Training Loss (MSE)",
-        color="#38bdf8", linewidth=2.2, alpha=0.9)
-ax.plot(epochs_arr, val_loss_hist,   label="Validation Loss (MSE)",
-        color="#a78bfa", linewidth=2.2, alpha=0.9, linestyle="--")
-ax.axhline(test_loss_val, color="#10b981", linestyle=":", linewidth=1.8,
-           label=f"Test Loss (MSE = {test_loss_val:.5f})")
+gnn_model = _GNNGraphAe(IN_DIM)
+gnn_crit  = nn.MSELoss()
+gnn_opt   = optim.AdamW(gnn_model.parameters(), lr=1e-3, weight_decay=1e-4)
+gnn_sch   = optim.lr_scheduler.LambdaLR(gnn_opt, lr_lambda=lr_lambda)
 
-ax.set_title(
-    "Bi-LSTM Autoencoder — Loss Convergence Curves\n"
-    "(Training vs Validation vs Test MSE — 30 Epochs)",
-    color=TEXT_CLR, fontsize=13, fontweight="bold", pad=14
-)
-ax.set_xlabel("Training Epoch", color=MUTED, fontsize=10)
-ax.set_ylabel("Mean Squared Error (MSE)", color=MUTED, fontsize=10)
-ax.set_xlim([0.5, len(train_loss_hist) + 0.5])
-ax.set_ylim(bottom=0.0)
-ax.legend(facecolor=PANEL, edgecolor=GRID_CLR, labelcolor=TEXT_CLR, fontsize=9.5)
+n_tr_g = int(0.75 * len(X_auto))
+n_vl_g = int(0.15 * len(X_auto))
+g_tr, g_vl, g_te = X_auto[:n_tr_g], X_auto[n_tr_g:n_tr_g + n_vl_g], X_auto[n_tr_g + n_vl_g:]
+
+g_ld_tr = DataLoader(TensorDataset(torch.from_numpy(g_tr)), batch_size=128, shuffle=True)
+g_ld_vl = DataLoader(TensorDataset(torch.from_numpy(g_vl)), batch_size=128)
+g_ld_te = DataLoader(TensorDataset(torch.from_numpy(g_te)), batch_size=128)
+
+gnn_train_hist, gnn_val_hist = [], []
+for ep in range(1, EPOCHS_AE + 1):
+    gnn_model.train()
+    tl = 0.0
+    for (bx,) in g_ld_tr:
+        gnn_opt.zero_grad()
+        rec, _ = gnn_model(bx)
+        loss = gnn_crit(rec, bx)
+        loss.backward()
+        nn.utils.clip_grad_norm_(gnn_model.parameters(), 1.0)
+        gnn_opt.step()
+        tl += loss.item()
+    tl /= len(g_ld_tr)
+    gnn_sch.step()
+
+    gnn_model.eval()
+    vl = 0.0
+    with torch.no_grad():
+        for (bx,) in g_ld_vl:
+            rec, _ = gnn_model(bx)
+            vl += gnn_crit(rec, bx).item()
+    vl /= len(g_ld_vl)
+    gnn_train_hist.append(tl)
+    gnn_val_hist.append(vl)
+    if ep % 10 == 0 or ep == 1:
+        print(f"   [GNN]  Epoch {ep:02d}/{EPOCHS_AE} | Train MSE={tl:.5f} | Val MSE={vl:.5f}")
+
+gnn_model.eval()
+gnn_test_val = 0.0
+with torch.no_grad():
+    for (bx,) in g_ld_te:
+        rec, _ = gnn_model(bx)
+        gnn_test_val += gnn_crit(rec, bx).item()
+gnn_test_val /= max(len(g_ld_te), 1)
+print(f"   [GNN]  Test MSE = {gnn_test_val:.5f}")
+
+
+# --- Plot both side-by-side ---
+epochs_arr = np.arange(1, EPOCHS_AE + 1)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2), dpi=180)
+apply_dark(fig, [ax1, ax2])
+
+# Left: Bi-LSTM Autoencoder
+ax1.plot(epochs_arr, lstm_train_hist, label="Training Loss (MSE)", color="#38bdf8", linewidth=2.0, alpha=0.9)
+ax1.plot(epochs_arr, lstm_val_hist,   label="Validation Loss (MSE)", color="#a78bfa", linewidth=2.0, alpha=0.9, linestyle="--")
+ax1.axhline(lstm_test_val, color="#10b981", linestyle=":", linewidth=1.8, label=f"Test Loss (MSE = {lstm_test_val:.5f})")
+ax1.set_title("Bi-LSTM Autoencoder — Sequence Loss Convergence\n(50 Epochs · Cosine Annealing)", color=TEXT_CLR, fontsize=11, fontweight="bold", pad=12)
+ax1.set_xlabel("Training Epoch", color=MUTED, fontsize=9.5)
+ax1.set_ylabel("Mean Squared Error (MSE)", color=MUTED, fontsize=9.5)
+ax1.set_xlim([0.5, EPOCHS_AE + 0.5])
+ax1.set_ylim(bottom=0.0)
+ax1.legend(facecolor=PANEL, edgecolor=GRID_CLR, labelcolor=TEXT_CLR, fontsize=8.5)
+
+# Right: Graph-Behaviour GNN Autoencoder
+ax2.plot(epochs_arr, gnn_train_hist, label="Training Loss (MSE)", color="#34d399", linewidth=2.0, alpha=0.9)
+ax2.plot(epochs_arr, gnn_val_hist,   label="Validation Loss (MSE)", color="#fb923c", linewidth=2.0, alpha=0.9, linestyle="--")
+ax2.axhline(gnn_test_val, color="#f43f5e", linestyle=":", linewidth=1.8, label=f"Test Loss (MSE = {gnn_test_val:.5f})")
+ax2.set_title("Graph-Behaviour GNN Autoencoder — Node Loss Convergence\n(50 Epochs · LayerNorm Bottleneck)", color=TEXT_CLR, fontsize=11, fontweight="bold", pad=12)
+ax2.set_xlabel("Training Epoch", color=MUTED, fontsize=9.5)
+ax2.set_ylabel("Mean Squared Error (MSE)", color=MUTED, fontsize=9.5)
+ax2.set_xlim([0.5, EPOCHS_AE + 0.5])
+ax2.set_ylim(bottom=0.0)
+ax2.legend(facecolor=PANEL, edgecolor=GRID_CLR, labelcolor=TEXT_CLR, fontsize=8.5)
+
+plt.tight_layout(pad=2.0)
 save(fig, "loss_curves.png")
 
 
